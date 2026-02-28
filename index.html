@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Hippo Puzzle</title>
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #1a1a2e;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: system-ui, sans-serif;
+        color: #fff;
+        touch-action: none;
+      }
+
+      #ui {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 16px;
+        user-select: none;
+      }
+
+      #ui span {
+        background: rgba(255,255,255,0.1);
+        padding: 4px 12px;
+        border-radius: 8px;
+      }
+
+      #game-container {
+        position: relative;
+        padding-top: 64px;
+      }
+
+      #grid {
+        display: grid;
+        position: relative;
+      }
+
+      .cell {
+        border: 1px solid rgba(255,255,255,0.06);
+      }
+
+      .cell:nth-child(even) {
+        background: rgba(255,255,255,0.02);
+      }
+
+      .piece {
+        position: absolute;
+        border-radius: 6px;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+        transition: box-shadow 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: rgba(0,0,0,0.5);
+      }
+
+      .piece:active {
+        cursor: grabbing;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        z-index: 10 !important;
+      }
+
+      .piece.log-horizontal {
+        background: #5d8a3c;
+        border: 2px solid #4a7030;
+      }
+
+      .piece.log-vertical {
+        background: #8b5e3c;
+        border: 2px solid #6e4a2e;
+      }
+
+      .piece.hippo {
+        background: #4a90d9;
+        border: 2px solid #2c6ea8;
+        border-radius: 50%;
+        z-index: 5;
+        font-size: 22px;
+        color: white;
+      }
+
+      .piece.mama {
+        background: #d96b9a;
+        border: 2px solid #b0527a;
+        border-radius: 50%;
+        z-index: 4;
+        font-size: 22px;
+        color: white;
+        cursor: default;
+        pointer-events: none;
+      }
+
+      #win-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 16px;
+        border-radius: 8px;
+        z-index: 100;
+      }
+
+      #win-overlay.show {
+        display: flex;
+      }
+
+      #win-overlay h2 {
+        font-size: 36px;
+      }
+
+      #win-overlay button {
+        padding: 10px 28px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        background: #4a90d9;
+        color: white;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ui">
+      <span id="level-label">Level 1</span>
+      <span>Moves: <strong id="move-count">0</strong></span>
+    </div>
+    <div id="game-container">
+      <div id="grid"></div>
+      <div id="win-overlay">
+        <h2>You found mama! 🦛💕</h2>
+        <button id="restart-btn">Play Again</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

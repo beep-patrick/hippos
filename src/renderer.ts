@@ -1,0 +1,101 @@
+import type { GameState } from './types';
+
+const CELL_PX = 56; // pixel size of each grid cell
+
+export function cellSize(): number {
+  return CELL_PX;
+}
+
+// Build the static grid background (called once).
+export function buildGrid(container: HTMLElement, rows: number, cols: number): void {
+  const grid = container.querySelector<HTMLElement>('#grid')!;
+  grid.style.width = `${cols * CELL_PX}px`;
+  grid.style.height = `${rows * CELL_PX}px`;
+  grid.style.gridTemplateColumns = `repeat(${cols}, ${CELL_PX}px)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, ${CELL_PX}px)`;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      grid.appendChild(cell);
+    }
+  }
+}
+
+// Render (or re-render) all game pieces onto the grid.
+export function renderPieces(container: HTMLElement, state: GameState): void {
+  const grid = container.querySelector<HTMLElement>('#grid')!;
+
+  // Remove all existing pieces.
+  grid.querySelectorAll('.piece').forEach(el => el.remove());
+
+  // Render logs.
+  for (const log of state.logs) {
+    const el = document.createElement('div');
+    el.className = `piece ${log.orientation === 'horizontal' ? 'log-horizontal' : 'log-vertical'}`;
+    el.dataset.id = log.id;
+
+    const w = log.orientation === 'horizontal' ? log.length * CELL_PX : CELL_PX;
+    const h = log.orientation === 'vertical'   ? log.length * CELL_PX : CELL_PX;
+
+    el.style.left   = `${log.col * CELL_PX}px`;
+    el.style.top    = `${log.row * CELL_PX}px`;
+    el.style.width  = `${w}px`;
+    el.style.height = `${h}px`;
+    el.style.zIndex = '2';
+
+    grid.appendChild(el);
+  }
+
+  // Render hippo.
+  const hippo = document.createElement('div');
+  hippo.className = 'piece hippo';
+  hippo.dataset.id = 'hippo';
+  hippo.textContent = '🦛';
+  hippo.style.left   = `${state.hippoPos.col * CELL_PX}px`;
+  hippo.style.top    = `${state.hippoPos.row * CELL_PX}px`;
+  hippo.style.width  = `${CELL_PX}px`;
+  hippo.style.height = `${CELL_PX}px`;
+  hippo.style.zIndex = '5';
+  grid.appendChild(hippo);
+
+  // Render mama hippo above the grid (one row up, at mamaCol).
+  const mama = document.createElement('div');
+  mama.className = 'piece mama';
+  mama.dataset.id = 'mama';
+  mama.textContent = '🦛';
+  mama.style.left   = `${state.level.mamaCol * CELL_PX}px`;
+  mama.style.top    = `${-CELL_PX}px`;
+  mama.style.width  = `${CELL_PX}px`;
+  mama.style.height = `${CELL_PX}px`;
+  mama.style.zIndex = '4';
+  grid.appendChild(mama);
+}
+
+// Update only the position of a single piece element (faster than full re-render).
+export function updatePiecePosition(
+  container: HTMLElement,
+  id: string,
+  row: number,
+  col: number,
+): void {
+  const grid = container.querySelector<HTMLElement>('#grid')!;
+  const el = grid.querySelector<HTMLElement>(`[data-id="${id}"]`);
+  if (!el) return;
+  el.style.left = `${col * CELL_PX}px`;
+  el.style.top  = `${row * CELL_PX}px`;
+}
+
+export function updateMoveCount(count: number): void {
+  const el = document.getElementById('move-count');
+  if (el) el.textContent = String(count);
+}
+
+export function showWin(container: HTMLElement): void {
+  container.querySelector('#win-overlay')?.classList.add('show');
+}
+
+export function hideWin(container: HTMLElement): void {
+  container.querySelector('#win-overlay')?.classList.remove('show');
+}
