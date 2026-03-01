@@ -102,12 +102,27 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
   return true;
 }
 
-// Compute how far left/right the hippo can slide along its current row.
-export function hippoSlideRange(state: GameState): { min: number; max: number } {
-  const { row, col } = state.hippoPos;
+// Compute how far up/down the hippo can move from a given cell.
+export function hippoVerticalRangeAt(state: GameState, row: number, col: number): { min: number; max: number } {
+  const { rows } = state.level;
+  const blocked = occupiedCells(state.logs, null, null);
+  let min = row;
+  for (let r = row - 1; r >= 0; r--) {
+    if (blocked.has(`${r},${col}`)) break;
+    min = r;
+  }
+  let max = row;
+  for (let r = row + 1; r < rows; r++) {
+    if (blocked.has(`${r},${col}`)) break;
+    max = r;
+  }
+  return { min, max };
+}
+
+// Compute how far left/right the hippo can slide from a given cell.
+export function hippoSlideRangeAt(state: GameState, row: number, col: number): { min: number; max: number } {
   const { cols } = state.level;
   const blocked = occupiedCells(state.logs, null, null);
-
   let min = col;
   for (let c = col - 1; c >= 0; c--) {
     if (blocked.has(`${row},${c}`)) break;
@@ -119,6 +134,14 @@ export function hippoSlideRange(state: GameState): { min: number; max: number } 
     max = c;
   }
   return { min, max };
+}
+
+export function hippoVerticalRange(state: GameState): { min: number; max: number } {
+  return hippoVerticalRangeAt(state, state.hippoPos.row, state.hippoPos.col);
+}
+
+export function hippoSlideRange(state: GameState): { min: number; max: number } {
+  return hippoSlideRangeAt(state, state.hippoPos.row, state.hippoPos.col);
 }
 
 // Compute the range a log can slide to (min and max anchor position along its axis).
