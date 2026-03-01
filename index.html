@@ -85,18 +85,37 @@
 
       .piece:active {
         cursor: grabbing;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
         z-index: 10 !important;
       }
 
-      .piece.log-horizontal {
-        background: #5d8a3c;
-        border: 2px solid #4a7030;
+      .piece.log-horizontal:active::before,
+      .piece.log-vertical:active::before {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
       }
 
+      .piece.log-horizontal,
       .piece.log-vertical {
+        background: transparent;
+        border: none;
+      }
+
+      .piece.log-horizontal::before,
+      .piece.log-vertical::before {
+        content: '';
+        position: absolute;
         background: #8b5e3c;
         border: 2px solid #6e4a2e;
+        border-radius: 4px;
+      }
+
+      .piece.log-horizontal::before {
+        left: 0; right: 0;
+        top: 20%; bottom: 20%;
+      }
+
+      .piece.log-vertical::before {
+        top: 0; bottom: 0;
+        left: 20%; right: 20%;
       }
 
       .piece.hippo {
