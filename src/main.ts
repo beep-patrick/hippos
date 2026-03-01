@@ -1,12 +1,25 @@
-import { level1 } from './levels/level1';
+import { parseCsvLevel } from './parseCsvLevel';
 import { initState } from './gameState';
 import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin } from './renderer';
 import { attachInputHandlers } from './input';
 
+const rawCsvs = import.meta.glob('./levels/*.csv', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+
+const levels = Object.entries(rawCsvs)
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([path, content]) => {
+    const stem = path.split('/').pop()!.replace('.csv', '');
+    const label = stem.replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return parseCsvLevel(stem, label, content);
+  });
+
+if (levels.length === 0) throw new Error('No CSV levels found in src/levels/');
+const level = levels[0];
+
 const container = document.getElementById('game-container')!;
 
 // Build the static grid once.
-buildGrid(container, level1.rows, level1.cols, level1.riverCells);
+buildGrid(container, level.rows, level.cols, level.riverCells);
 
 let cleanupInput: (() => void) | null = null;
 
@@ -14,10 +27,10 @@ function startGame(): void {
   // Tear down previous input handlers.
   cleanupInput?.();
 
-  const state = initState(level1);
+  const state = initState(level);
 
   const labelEl = document.getElementById('level-label');
-  if (labelEl) labelEl.textContent = level1.label;
+  if (labelEl) labelEl.textContent = level.label;
 
   hideWin(container);
   renderPieces(container, state);

@@ -6,8 +6,12 @@ const GRID_PADDING = 48; // total left+right margin around the grid
 const UI_HEIGHT    = 80; // #ui bar + margins above the grid
 
 function computeCellPx(rows: number, cols: number): number {
-  const maxW = Math.floor((window.innerWidth  - GRID_PADDING) / cols);
-  const maxH = Math.floor((window.innerHeight - UI_HEIGHT)    / rows);
+  // Use visualViewport when available — on Safari it correctly excludes
+  // the address bar and toolbar from the available height.
+  const vw = window.visualViewport?.width  ?? window.innerWidth;
+  const vh = window.visualViewport?.height ?? window.innerHeight;
+  const maxW = Math.floor((vw - GRID_PADDING) / cols);
+  const maxH = Math.floor((vh - UI_HEIGHT)    / rows);
   return Math.max(40, Math.min(maxW, maxH));
 }
 
@@ -71,16 +75,19 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     grid.appendChild(el);
   }
 
+  const emojiSize = `${Math.round(CELL_PX * 0.55)}px`;
+
   // Render hippo.
   const hippo = document.createElement('div');
   hippo.className = 'piece hippo';
   hippo.dataset.id = 'hippo';
   hippo.textContent = '🦛';
-  hippo.style.left   = `${state.hippoPos.col * CELL_PX}px`;
-  hippo.style.top    = `${state.hippoPos.row * CELL_PX}px`;
-  hippo.style.width  = `${CELL_PX}px`;
-  hippo.style.height = `${CELL_PX}px`;
-  hippo.style.zIndex = '5';
+  hippo.style.left     = `${state.hippoPos.col * CELL_PX}px`;
+  hippo.style.top      = `${state.hippoPos.row * CELL_PX}px`;
+  hippo.style.width    = `${CELL_PX}px`;
+  hippo.style.height   = `${CELL_PX}px`;
+  hippo.style.fontSize = emojiSize;
+  hippo.style.zIndex   = '5';
   grid.appendChild(hippo);
 
   // Render mama hippo at her position in the terrain.
@@ -88,11 +95,12 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   mama.className = 'piece mama';
   mama.dataset.id = 'mama';
   mama.textContent = '🦛';
-  mama.style.left   = `${state.level.mamaPos.col * CELL_PX}px`;
-  mama.style.top    = `${state.level.mamaPos.row * CELL_PX}px`;
-  mama.style.width  = `${CELL_PX}px`;
-  mama.style.height = `${CELL_PX}px`;
-  mama.style.zIndex = '4';
+  mama.style.left     = `${state.level.mamaPos.col * CELL_PX}px`;
+  mama.style.top      = `${state.level.mamaPos.row * CELL_PX}px`;
+  mama.style.width    = `${CELL_PX}px`;
+  mama.style.height   = `${CELL_PX}px`;
+  mama.style.fontSize = emojiSize;
+  mama.style.zIndex   = '4';
   grid.appendChild(mama);
 }
 

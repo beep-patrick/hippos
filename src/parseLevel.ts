@@ -101,8 +101,8 @@ export function parseLevel(id: string, label: string, ascii: string, terrainStr?
     }
 
     const length = sorted.length;
-    if (length < 2 || length > 5)
-      throw new Error(`parseLevel: log '${letter}' has length ${length}; logs must be 2–5 cells`);
+    if (length < 2 || length > 50)
+      throw new Error(`parseLevel: log '${letter}' has length ${length}; logs must be 2–50 cells`);
 
     logs.push({
       id: `log-${letter.toLowerCase()}`,
