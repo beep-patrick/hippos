@@ -50,6 +50,7 @@ export function updateTerrainClasses(container: HTMLElement, level: Level): void
   });
 }
 
+
 // Render (or re-render) all game pieces onto the grid.
 export function renderPieces(container: HTMLElement, state: GameState): void {
   const grid = container.querySelector<HTMLElement>('#grid')!;
@@ -75,8 +76,6 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     grid.appendChild(el);
   }
 
-  const emojiSize = `${Math.round(CELL_PX * 0.55)}px`;
-
   // Render hippo.
   const hippo = document.createElement('div');
   hippo.className = 'piece hippo';
@@ -86,7 +85,7 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   hippo.style.top      = `${state.hippoPos.row * CELL_PX}px`;
   hippo.style.width    = `${CELL_PX}px`;
   hippo.style.height   = `${CELL_PX}px`;
-  hippo.style.fontSize = emojiSize;
+  hippo.style.fontSize = `${Math.round(CELL_PX * 0.78)}px`;
   hippo.style.zIndex   = '5';
   grid.appendChild(hippo);
 
@@ -99,7 +98,7 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   mama.style.top      = `${state.level.mamaPos.row * CELL_PX}px`;
   mama.style.width    = `${CELL_PX}px`;
   mama.style.height   = `${CELL_PX}px`;
-  mama.style.fontSize = emojiSize;
+  mama.style.fontSize = `${Math.round(CELL_PX * 1.05)}px`;
   mama.style.zIndex   = '4';
   grid.appendChild(mama);
 }

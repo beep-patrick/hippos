@@ -104,7 +104,6 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
   if (blocked.has(`${newRow},${newCol}`)) return false;
 
   state.hippoPos = { row: newRow, col: newCol };
-  state.moves += 1;
 
   const { row: mr, col: mc } = state.level.mamaPos;
   if (Math.abs(newRow - mr) <= 1 && Math.abs(newCol - mc) <= 1) {

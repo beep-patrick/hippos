@@ -2,6 +2,7 @@ import { parseCsvLevel } from './parseCsvLevel';
 import { initState } from './gameState';
 import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin } from './renderer';
 import { attachInputHandlers } from './input';
+import hippoSoundUrl from './sounds/hippo.mp3?url';
 
 const rawCsvs = import.meta.glob('./levels/*.csv', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
@@ -14,16 +15,20 @@ const levels = Object.entries(rawCsvs)
   });
 
 if (levels.length === 0) throw new Error('No CSV levels found in src/levels/');
-const level = levels[0];
 
 const container = document.getElementById('game-container')!;
+const restartBtn = document.getElementById('restart-btn')!;
 
-// Build the static grid once.
-buildGrid(container, level.rows, level.cols, level.riverCells);
-
+let currentLevelIndex = 0;
 let cleanupInput: (() => void) | null = null;
 
-function startGame(): void {
+// Build the static grid once.
+buildGrid(container, levels[0].rows, levels[0].cols, levels[0].riverCells);
+
+function startGame(index: number): void {
+  currentLevelIndex = index;
+  const level = levels[index];
+
   // Tear down previous input handlers.
   cleanupInput?.();
 
@@ -37,10 +42,16 @@ function startGame(): void {
   updateMoveCount(0);
 
   cleanupInput = attachInputHandlers(container, state, () => {
+    new Audio(hippoSoundUrl).play();
+    const hasNext = currentLevelIndex + 1 < levels.length;
+    restartBtn.textContent = hasNext ? 'Next Level' : 'Play Again';
     showWin(container);
   });
 }
 
-document.getElementById('restart-btn')?.addEventListener('click', startGame);
+restartBtn.addEventListener('click', () => {
+  const hasNext = currentLevelIndex + 1 < levels.length;
+  startGame(hasNext ? currentLevelIndex + 1 : 0);
+});
 
-startGame();
+startGame(0);

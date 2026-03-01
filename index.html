@@ -125,20 +125,15 @@
       }
 
       .piece.hippo {
-        background: #4a90d9;
-        border: 2px solid #2c6ea8;
-        border-radius: 50%;
         z-index: 5;
-        color: white;
+        color: rgba(0,0,0,1);
       }
 
       .piece.mama {
-        background: #d96b9a;
-        border: 2px solid #b0527a;
-        border-radius: 50%;
         z-index: 4;
-        color: white;
         pointer-events: none;
+        color: rgba(0,0,0,1);
+        filter: sepia(1) hue-rotate(290deg) saturate(1.5) brightness(1.1);
       }
 
       #win-overlay {
@@ -150,7 +145,6 @@
         justify-content: center;
         flex-direction: column;
         gap: 16px;
-        border-radius: 8px;
         z-index: 100;
       }
 
