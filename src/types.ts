@@ -15,7 +15,7 @@ export interface Level {
   cols: number;
   logs: Log[];
   hippoStart: { row: number; col: number };
-  mamaCol: number; // column where mama hippo waits (win = reach row 0 at this col)
+  mamaPos: { row: number; col: number }; // mama hippo's cell; win = baby hippo adjacent (including diagonally)
   riverCells?: Set<string>; // "row,col" keys; undefined = whole grid is passable
 }
 

@@ -64,10 +64,6 @@ export function parseLevel(id: string, label: string, ascii: string, terrainStr?
 
   if (!hippoStart) throw new Error('parseLevel: missing H (hippo start) in grid');
   if (!mamaPos)   throw new Error('parseLevel: missing M (mama hippo) in grid');
-  if (mamaPos.row !== 0)
-    throw new Error(`parseLevel: M (mama hippo) must be on row 0, found on row ${mamaPos.row}`);
-
-  const mamaCol = mamaPos.col;
 
   // 6. Collect log cells in top-to-bottom, left-to-right order
   const letterOrder: string[] = [];
@@ -143,8 +139,8 @@ export function parseLevel(id: string, label: string, ascii: string, terrainStr?
 
     if (terrainGrid[hippoStart.row][hippoStart.col] !== '~')
       throw new Error(`parseLevel: hippo start (${hippoStart.row},${hippoStart.col}) is not on a river cell`);
-    if (terrainGrid[0][mamaCol] !== '~')
-      throw new Error(`parseLevel: mama destination (0,${mamaCol}) is not on a river cell`);
+    if (terrainGrid[mamaPos.row][mamaPos.col] !== '~')
+      throw new Error(`parseLevel: mama position (${mamaPos.row},${mamaPos.col}) is not on a river cell`);
 
     riverCells = new Set<string>();
     for (let r = 0; r < terrainGrid.length; r++) {
@@ -154,5 +150,5 @@ export function parseLevel(id: string, label: string, ascii: string, terrainStr?
     }
   }
 
-  return { id, label, rows, cols, logs, hippoStart, mamaCol, riverCells };
+  return { id, label, rows, cols, logs, hippoStart, mamaPos, riverCells };
 }

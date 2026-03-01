@@ -21,6 +21,7 @@ function occupiedCells(
   logs: Log[],
   excludeLogId: string | null,
   hippoPos: { row: number; col: number } | null,
+  mamaPos?: { row: number; col: number },
 ): Set<string> {
   const cells = new Set<string>();
 
@@ -35,6 +36,10 @@ function occupiedCells(
 
   if (hippoPos) {
     cells.add(`${hippoPos.row},${hippoPos.col}`);
+  }
+
+  if (mamaPos) {
+    cells.add(`${mamaPos.row},${mamaPos.col}`);
   }
 
   return cells;
@@ -72,8 +77,8 @@ export function moveLog(state: GameState, logId: string, newRow: number, newCol:
   const newCells = logCells(log, newRow, newCol);
   if (!newCells.every(c => inBounds(c.row, c.col, rows, cols))) return false;
 
-  // Check no collision (exclude this log, include hippo).
-  const blocked = occupiedCells(state.logs, logId, state.hippoPos);
+  // Check no collision (exclude this log, include hippo and mama).
+  const blocked = occupiedCells(state.logs, logId, state.hippoPos, state.level.mamaPos);
   if (newCells.some(c => blocked.has(`${c.row},${c.col}`))) return false;
 
   log.row = newRow;
@@ -95,13 +100,14 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
   if (!inBounds(newRow, newCol, rows, cols)) return false;
   if (!isRiver(state.level, newRow, newCol)) return false;
 
-  const blocked = occupiedCells(state.logs, null, null);
+  const blocked = occupiedCells(state.logs, null, null, state.level.mamaPos);
   if (blocked.has(`${newRow},${newCol}`)) return false;
 
   state.hippoPos = { row: newRow, col: newCol };
   state.moves += 1;
 
-  if (newRow === 0 && newCol === state.level.mamaCol) {
+  const { row: mr, col: mc } = state.level.mamaPos;
+  if (Math.abs(newRow - mr) <= 1 && Math.abs(newCol - mc) <= 1) {
     state.won = true;
   }
 
@@ -111,7 +117,7 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
 // Compute how far up/down the hippo can move from a given cell.
 export function hippoVerticalRangeAt(state: GameState, row: number, col: number): { min: number; max: number } {
   const { rows } = state.level;
-  const blocked = occupiedCells(state.logs, null, null);
+  const blocked = occupiedCells(state.logs, null, null, state.level.mamaPos);
   let min = row;
   for (let r = row - 1; r >= 0; r--) {
     if (blocked.has(`${r},${col}`) || !isRiver(state.level, r, col)) break;
@@ -128,7 +134,7 @@ export function hippoVerticalRangeAt(state: GameState, row: number, col: number)
 // Compute how far left/right the hippo can slide from a given cell.
 export function hippoSlideRangeAt(state: GameState, row: number, col: number): { min: number; max: number } {
   const { cols } = state.level;
-  const blocked = occupiedCells(state.logs, null, null);
+  const blocked = occupiedCells(state.logs, null, null, state.level.mamaPos);
   let min = col;
   for (let c = col - 1; c >= 0; c--) {
     if (blocked.has(`${row},${c}`) || !isRiver(state.level, row, c)) break;
@@ -156,7 +162,7 @@ export function logSlideRange(state: GameState, logId: string): { min: number; m
   if (!log) return { min: 0, max: 0 };
 
   const { rows, cols } = state.level;
-  const blocked = occupiedCells(state.logs, logId, state.hippoPos);
+  const blocked = occupiedCells(state.logs, logId, state.hippoPos, state.level.mamaPos);
 
   if (log.orientation === 'horizontal') {
     // Slide left

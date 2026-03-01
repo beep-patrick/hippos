@@ -73,13 +73,13 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   hippo.style.zIndex = '5';
   grid.appendChild(hippo);
 
-  // Render mama hippo above the grid (one row up, at mamaCol).
+  // Render mama hippo at her position in the terrain.
   const mama = document.createElement('div');
   mama.className = 'piece mama';
   mama.dataset.id = 'mama';
   mama.textContent = '🦛';
-  mama.style.left   = `${state.level.mamaCol * CELL_PX}px`;
-  mama.style.top    = `${-CELL_PX}px`;
+  mama.style.left   = `${state.level.mamaPos.col * CELL_PX}px`;
+  mama.style.top    = `${state.level.mamaPos.row * CELL_PX}px`;
   mama.style.width  = `${CELL_PX}px`;
   mama.style.height = `${CELL_PX}px`;
   mama.style.zIndex = '4';
