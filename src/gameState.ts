@@ -102,6 +102,25 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
   return true;
 }
 
+// Compute how far left/right the hippo can slide along its current row.
+export function hippoSlideRange(state: GameState): { min: number; max: number } {
+  const { row, col } = state.hippoPos;
+  const { cols } = state.level;
+  const blocked = occupiedCells(state.logs, null, null);
+
+  let min = col;
+  for (let c = col - 1; c >= 0; c--) {
+    if (blocked.has(`${row},${c}`)) break;
+    min = c;
+  }
+  let max = col;
+  for (let c = col + 1; c < cols; c++) {
+    if (blocked.has(`${row},${c}`)) break;
+    max = c;
+  }
+  return { min, max };
+}
+
 // Compute the range a log can slide to (min and max anchor position along its axis).
 export function logSlideRange(state: GameState, logId: string): { min: number; max: number } {
   const log = state.logs.find(l => l.id === logId);
