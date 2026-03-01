@@ -1,6 +1,15 @@
 import type { GameState, Level } from './types';
 
-const CELL_PX = 56; // pixel size of each grid cell
+let CELL_PX = 56; // computed in buildGrid from viewport; fallback default
+
+const GRID_PADDING = 48; // total left+right margin around the grid
+const UI_HEIGHT    = 80; // #ui bar + margins above the grid
+
+function computeCellPx(rows: number, cols: number): number {
+  const maxW = Math.floor((window.innerWidth  - GRID_PADDING) / cols);
+  const maxH = Math.floor((window.innerHeight - UI_HEIGHT)    / rows);
+  return Math.max(40, Math.min(maxW, maxH));
+}
 
 export function cellSize(): number {
   return CELL_PX;
@@ -8,6 +17,7 @@ export function cellSize(): number {
 
 // Build the static grid background (called once).
 export function buildGrid(container: HTMLElement, rows: number, cols: number, riverCells?: Set<string>): void {
+  CELL_PX = computeCellPx(rows, cols);
   const grid = container.querySelector<HTMLElement>('#grid')!;
   grid.style.width = `${cols * CELL_PX}px`;
   grid.style.height = `${rows * CELL_PX}px`;
