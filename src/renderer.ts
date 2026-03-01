@@ -76,6 +76,26 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     grid.appendChild(el);
   }
 
+  // Render hippo obstacles.
+  for (const obstacle of state.hippoObstacles) {
+    const el = document.createElement('div');
+    el.className = 'piece hippo-obstacle';
+    el.dataset.id = obstacle.id;
+    el.textContent = '🦛';
+
+    const w = obstacle.orientation === 'horizontal' ? 2 * CELL_PX : CELL_PX;
+    const h = obstacle.orientation === 'vertical'   ? 2 * CELL_PX : CELL_PX;
+
+    el.style.left     = `${obstacle.col * CELL_PX}px`;
+    el.style.top      = `${obstacle.row * CELL_PX}px`;
+    el.style.width    = `${w}px`;
+    el.style.height   = `${h}px`;
+    el.style.fontSize = `${Math.round(CELL_PX * 0.78)}px`;
+    el.style.zIndex   = '3';
+
+    grid.appendChild(el);
+  }
+
   // Render hippo.
   const hippo = document.createElement('div');
   hippo.className = 'piece hippo';
@@ -95,10 +115,10 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   mama.dataset.id = 'mama';
   mama.textContent = '🦛';
   mama.style.left     = `${state.level.mamaPos.col * CELL_PX}px`;
-  mama.style.top      = `${state.level.mamaPos.row * CELL_PX}px`;
-  mama.style.width    = `${CELL_PX}px`;
+  mama.style.top      = `${state.level.mamaPos.row * CELL_PX - Math.round(CELL_PX * 0.2)}px`;
+  mama.style.width    = `${(state.level.mamaWidth ?? 1) * CELL_PX}px`;
   mama.style.height   = `${CELL_PX}px`;
-  mama.style.fontSize = `${Math.round(CELL_PX * 1.05)}px`;
+  mama.style.fontSize = `${Math.round(CELL_PX * 1.85)}px`;
   mama.style.zIndex   = '4';
   grid.appendChild(mama);
 }

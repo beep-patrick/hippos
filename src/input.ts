@@ -1,5 +1,5 @@
 import type { GameState } from './types';
-import { moveLog, moveHippo, logSlideRange, hippoSlideRangeAt, hippoVerticalRangeAt } from './gameState';
+import { moveLog, moveHippo, moveHippoObstacle, logSlideRange, hippoObstacleSlideRange, hippoSlideRangeAt, hippoVerticalRangeAt } from './gameState';
 import { updatePiecePosition, updateMoveCount, cellSize } from './renderer';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -45,6 +45,15 @@ interface LogDrag {
   range: { min: number; max: number };
 }
 
+interface HippoObstacleDrag {
+  kind: 'hippoObstacle';
+  obstacleId: string;
+  startPointer: { x: number; y: number };
+  startRow: number;
+  startCol: number;
+  range: { min: number; max: number };
+}
+
 interface HippoDrag {
   kind: 'hippo';
   startPointer: { x: number; y: number };
@@ -52,7 +61,7 @@ interface HippoDrag {
   startCol: number;
 }
 
-let active: LogDrag | HippoDrag | null = null;
+let active: LogDrag | HippoObstacleDrag | HippoDrag | null = null;
 
 // ─── Public setup ────────────────────────────────────────────────────────────
 
@@ -80,9 +89,11 @@ export function attachInputHandlers(
         startRow: state.hippoPos.row,
         startCol: state.hippoPos.col,
       };
-    } else {
-      const log = state.logs.find(l => l.id === id);
-      if (!log) return;
+      return;
+    }
+
+    const log = state.logs.find(l => l.id === id);
+    if (log) {
       active = {
         kind: 'log',
         logId: id,
@@ -90,6 +101,19 @@ export function attachInputHandlers(
         startRow: log.row,
         startCol: log.col,
         range: logSlideRange(state, id),
+      };
+      return;
+    }
+
+    const obstacle = state.hippoObstacles.find(h => h.id === id);
+    if (obstacle) {
+      active = {
+        kind: 'hippoObstacle',
+        obstacleId: id,
+        startPointer: getPointer(e),
+        startRow: obstacle.row,
+        startCol: obstacle.col,
+        range: hippoObstacleSlideRange(state, id),
       };
     }
   }, opts);
@@ -116,6 +140,21 @@ export function attachInputHandlers(
       }
     }
 
+    if (active.kind === 'hippoObstacle') {
+      const a = active;
+      const obstacle = state.hippoObstacles.find(h => h.id === a.obstacleId);
+      if (!obstacle) return;
+      const dx = dp.x - a.startPointer.x;
+      const dy = dp.y - a.startPointer.y;
+      const el = container.querySelector<HTMLElement>(`[data-id="${a.obstacleId}"]`);
+      if (!el) return;
+      if (obstacle.orientation === 'horizontal') {
+        el.style.left = `${clamp(a.startCol + dx / CELL, a.range.min, a.range.max) * CELL}px`;
+      } else {
+        el.style.top = `${clamp(a.startRow + dy / CELL, a.range.min, a.range.max) * CELL}px`;
+      }
+    }
+
     if (active.kind === 'hippo') {
       const a = active;
       const dx = dp.x - a.startPointer.x;
@@ -124,7 +163,6 @@ export function attachInputHandlers(
       if (!el) return;
       const { rows, cols } = state.level;
 
-      // Step state to the nearest logical cell the finger is over.
       const targetRow = clamp(Math.round(a.startRow + dy / CELL), 0, rows - 1);
       const targetCol = clamp(Math.round(a.startCol + dx / CELL), 0, cols - 1);
       while (state.hippoPos.row !== targetRow || state.hippoPos.col !== targetCol) {
@@ -132,11 +170,9 @@ export function attachInputHandlers(
         if (state.won) break;
       }
 
-      // Fresh ranges from current logical cell — corners are navigable.
       const hRange = hippoSlideRangeAt(state, state.hippoPos.row, state.hippoPos.col);
       const vRange = hippoVerticalRangeAt(state, state.hippoPos.row, state.hippoPos.col);
 
-      // Visual follows finger, sub-cell smooth, clamped by obstacles.
       el.style.left = `${clamp(a.startCol + dx / CELL, hRange.min, hRange.max) * CELL}px`;
       el.style.top  = `${clamp(a.startRow + dy / CELL, vRange.min, vRange.max) * CELL}px`;
     }
@@ -168,6 +204,25 @@ export function attachInputHandlers(
       }
     }
 
+    if (active.kind === 'hippoObstacle') {
+      const a = active;
+      const obstacle = state.hippoObstacles.find(h => h.id === a.obstacleId);
+      if (obstacle) {
+        const dx = dp.x - a.startPointer.x;
+        const dy = dp.y - a.startPointer.y;
+        let newRow = a.startRow;
+        let newCol = a.startCol;
+        if (obstacle.orientation === 'horizontal') {
+          newCol = clamp(Math.round(a.startCol + dx / CELL), a.range.min, a.range.max);
+        } else {
+          newRow = clamp(Math.round(a.startRow + dy / CELL), a.range.min, a.range.max);
+        }
+        moveHippoObstacle(state, a.obstacleId, newRow, newCol);
+        updatePiecePosition(container, a.obstacleId, obstacle.row, obstacle.col);
+        updateMoveCount(state.moves);
+      }
+    }
+
     if (active.kind === 'hippo') {
       const a = active;
       const dx = dp.x - a.startPointer.x;
@@ -177,13 +232,11 @@ export function attachInputHandlers(
       const targetRow = clamp(Math.round(a.startRow + dy / CELL), 0, rows - 1);
       const targetCol = clamp(Math.round(a.startCol + dx / CELL), 0, cols - 1);
 
-      // Walk toward target, stopping at any log.
       while (state.hippoPos.row !== targetRow || state.hippoPos.col !== targetCol) {
         if (!stepHippoToward(state, targetRow, targetCol)) break;
         if (state.won) break;
       }
 
-      // Snap to final logical position.
       const hippoEl = container.querySelector<HTMLElement>('[data-id="hippo"]');
       if (hippoEl) {
         hippoEl.style.left = `${state.hippoPos.col * CELL}px`;

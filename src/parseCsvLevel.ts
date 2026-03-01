@@ -1,4 +1,4 @@
-import type { Level, Log, Orientation } from './types';
+import type { Level, Log, HippoObstacle, Orientation } from './types';
 
 /**
  * Parse a CSV grid string into a Level object.
@@ -7,10 +7,11 @@ import type { Level, Log, Orientation } from './types';
  *   ~       — water/river terrain (no ~ = riverbank)
  *   H       — baby hippo start (capital only; always treated as river)
  *   M       — mama hippo (capital only; water if ~ also present)
- *   a-z / A-Z (except H, M) — log cell; same letter in a contiguous straight line = one log
+ *   A-Z (except H, M) — log cell; same letter in a contiguous straight line = one log
+ *   a-z     — obstacle hippo cell; must be exactly 2 contiguous cells, all on river (~)
  *   (empty) — bank, no piece
  *
- * Examples: "~A" = water + log A  |  "A" = bank + log A  |  "~H" = water + hippo
+ * Examples: "~A" = water + log A  |  "A" = bank + log A  |  "~a,~a" = two river cells with obstacle hippo a
  */
 export function parseCsvLevel(id: string, label: string, csvStr: string): Level {
   // 1. Split into lines, trim, drop blank lines
@@ -33,9 +34,11 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
   // 4. Scan cells
   const riverCells = new Set<string>();
   let hippoStart: { row: number; col: number } | null = null;
-  let mamaPos: { row: number; col: number } | null = null;
+  const mamaCells: Array<{ row: number; col: number }> = [];
   const logLetterCells = new Map<string, Array<{ row: number; col: number }>>();
-  const letterOrder: string[] = [];
+  const logLetterOrder: string[] = [];
+  const obstacleCells = new Map<string, Array<{ row: number; col: number }>>();
+  const obstacleOrder: string[] = [];
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -52,24 +55,47 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
         hippoStart = { row: r, col: c };
         riverCells.add(`${r},${c}`); // hippo always starts in water
       } else if (letter === 'M') {
-        if (mamaPos !== null) throw new Error('parseCsvLevel: multiple M cells found; only one mama hippo is allowed');
-        mamaPos = { row: r, col: c };
-      } else {
+        mamaCells.push({ row: r, col: c });
+      } else if (letter === letter.toUpperCase()) {
+        // uppercase = log
         if (!logLetterCells.has(letter)) {
-          letterOrder.push(letter);
+          logLetterOrder.push(letter);
           logLetterCells.set(letter, []);
         }
         logLetterCells.get(letter)!.push({ row: r, col: c });
+      } else {
+        // lowercase = obstacle hippo
+        if (!obstacleCells.has(letter)) {
+          obstacleOrder.push(letter);
+          obstacleCells.set(letter, []);
+        }
+        obstacleCells.get(letter)!.push({ row: r, col: c });
       }
     }
   }
 
   if (!hippoStart) throw new Error('parseCsvLevel: missing H (hippo start)');
-  if (!mamaPos)   throw new Error('parseCsvLevel: missing M (mama hippo)');
+  if (mamaCells.length === 0) throw new Error('parseCsvLevel: missing M (mama hippo)');
+  if (mamaCells.length > 2) throw new Error('parseCsvLevel: too many M cells; mama can span at most 2 cells');
+
+  let mamaPos: { row: number; col: number };
+  let mamaWidth: number;
+  if (mamaCells.length === 2) {
+    if (mamaCells[0].row !== mamaCells[1].row)
+      throw new Error('parseCsvLevel: two M cells must be in the same row');
+    const [left, right] = mamaCells[0].col < mamaCells[1].col ? mamaCells : [mamaCells[1], mamaCells[0]];
+    if (right.col - left.col !== 1)
+      throw new Error('parseCsvLevel: two M cells must be adjacent (no gap)');
+    mamaPos = { row: left.row, col: left.col };
+    mamaWidth = 2;
+  } else {
+    mamaPos = mamaCells[0];
+    mamaWidth = 1;
+  }
 
   // 5. Build Log objects
   const logs: Log[] = [];
-  for (const letter of letterOrder) {
+  for (const letter of logLetterOrder) {
     const cells = logLetterCells.get(letter)!;
     const allSameRow = cells.every(c => c.row === cells[0].row);
     const allSameCol = cells.every(c => c.col === cells[0].col);
@@ -101,5 +127,42 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
     });
   }
 
-  return { id, label, rows, cols, logs, hippoStart, mamaPos, riverCells };
+  // 6. Build HippoObstacle objects (lowercase letters)
+  const hippoObstacles: HippoObstacle[] = [];
+  for (const letter of obstacleOrder) {
+    const cells = obstacleCells.get(letter)!;
+    const allSameRow = cells.every(c => c.row === cells[0].row);
+    const allSameCol = cells.every(c => c.col === cells[0].col);
+    if (!allSameRow && !allSameCol)
+      throw new Error(`parseCsvLevel: obstacle hippo '${letter}' spans both rows and columns — must be a straight line`);
+
+    const orientation: Orientation = allSameRow ? 'horizontal' : 'vertical';
+    const sorted = [...cells].sort((a, b) =>
+      orientation === 'horizontal' ? a.col - b.col : a.row - b.row
+    );
+
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1], curr = sorted[i];
+      const gap = orientation === 'horizontal' ? curr.col - prev.col : curr.row - prev.row;
+      if (gap !== 1)
+        throw new Error(`parseCsvLevel: obstacle hippo '${letter}' cells are non-contiguous`);
+    }
+
+    if (sorted.length !== 2)
+      throw new Error(`parseCsvLevel: obstacle hippo '${letter}' must be exactly 2 cells (got ${sorted.length})`);
+
+    for (const cell of sorted) {
+      if (!riverCells.has(`${cell.row},${cell.col}`))
+        throw new Error(`parseCsvLevel: obstacle hippo '${letter}' at row ${cell.row}, col ${cell.col} is not a river cell — mark with ~`);
+    }
+
+    hippoObstacles.push({
+      id: `obstacle-${letter}`,
+      orientation,
+      row: sorted[0].row,
+      col: sorted[0].col,
+    });
+  }
+
+  return { id, label, rows, cols, logs, hippoObstacles, hippoStart, mamaPos, mamaWidth, riverCells };
 }
