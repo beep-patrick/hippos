@@ -16,6 +16,7 @@ export interface Level {
   logs: Log[];
   hippoStart: { row: number; col: number };
   mamaCol: number; // column where mama hippo waits (win = reach row 0 at this col)
+  riverCells?: Set<string>; // "row,col" keys; undefined = whole grid is passable
 }
 
 export interface GameState {

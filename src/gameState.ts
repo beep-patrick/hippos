@@ -1,5 +1,10 @@
 import type { GameState, Level, Log } from './types';
 
+function isRiver(level: Level, row: number, col: number): boolean {
+  if (!level.riverCells) return true;
+  return level.riverCells.has(`${row},${col}`);
+}
+
 export function initState(level: Level): GameState {
   return {
     level,
@@ -88,6 +93,7 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
 
   const { rows, cols } = state.level;
   if (!inBounds(newRow, newCol, rows, cols)) return false;
+  if (!isRiver(state.level, newRow, newCol)) return false;
 
   const blocked = occupiedCells(state.logs, null, null);
   if (blocked.has(`${newRow},${newCol}`)) return false;
@@ -108,12 +114,12 @@ export function hippoVerticalRangeAt(state: GameState, row: number, col: number)
   const blocked = occupiedCells(state.logs, null, null);
   let min = row;
   for (let r = row - 1; r >= 0; r--) {
-    if (blocked.has(`${r},${col}`)) break;
+    if (blocked.has(`${r},${col}`) || !isRiver(state.level, r, col)) break;
     min = r;
   }
   let max = row;
   for (let r = row + 1; r < rows; r++) {
-    if (blocked.has(`${r},${col}`)) break;
+    if (blocked.has(`${r},${col}`) || !isRiver(state.level, r, col)) break;
     max = r;
   }
   return { min, max };
@@ -125,12 +131,12 @@ export function hippoSlideRangeAt(state: GameState, row: number, col: number): {
   const blocked = occupiedCells(state.logs, null, null);
   let min = col;
   for (let c = col - 1; c >= 0; c--) {
-    if (blocked.has(`${row},${c}`)) break;
+    if (blocked.has(`${row},${c}`) || !isRiver(state.level, row, c)) break;
     min = c;
   }
   let max = col;
   for (let c = col + 1; c < cols; c++) {
-    if (blocked.has(`${row},${c}`)) break;
+    if (blocked.has(`${row},${c}`) || !isRiver(state.level, row, c)) break;
     max = c;
   }
   return { min, max };

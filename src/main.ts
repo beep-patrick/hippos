@@ -6,7 +6,7 @@ import { attachInputHandlers } from './input';
 const container = document.getElementById('game-container')!;
 
 // Build the static grid once.
-buildGrid(container, level1.rows, level1.cols);
+buildGrid(container, level1.rows, level1.cols, level1.riverCells);
 
 let cleanupInput: (() => void) | null = null;
 

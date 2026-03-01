@@ -14,7 +14,7 @@ import type { Level, Log, Orientation } from './types';
  *   Spaced:  ". . A A . M . . . ."  (tokens separated by whitespace)
  *   Compact: "..AA.M...."           (one character per token, no spaces)
  */
-export function parseLevel(id: string, label: string, ascii: string): Level {
+export function parseLevel(id: string, label: string, ascii: string, terrainStr?: string): Level {
   // 1. Split + normalize lines (trim whitespace, drop blank lines)
   const rawLines = ascii.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   if (rawLines.length === 0) throw new Error('parseLevel: grid is empty');
@@ -117,5 +117,42 @@ export function parseLevel(id: string, label: string, ascii: string): Level {
     });
   }
 
-  return { id, label, rows, cols, logs, hippoStart, mamaCol };
+  // Parse optional terrain grid into riverCells Set
+  let riverCells: Set<string> | undefined;
+
+  if (terrainStr !== undefined) {
+    const terrainRawLines = terrainStr.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (terrainRawLines.length === 0) throw new Error('parseLevel: terrainStr is empty');
+
+    const terrainIsSpaced = terrainRawLines[0].includes(' ');
+    const terrainGrid: string[][] = terrainRawLines.map((line, i) => {
+      const tokens = terrainIsSpaced ? line.split(/\s+/) : [...line];
+      for (const t of tokens) {
+        if (t !== '~' && t !== '.')
+          throw new Error(`parseLevel: terrain row ${i} has unexpected character '${t}'; only '~' and '.' are allowed`);
+      }
+      return tokens;
+    });
+
+    if (terrainGrid.length !== rows)
+      throw new Error(`parseLevel: terrainStr has ${terrainGrid.length} rows but piece grid has ${rows}`);
+    for (let r = 0; r < terrainGrid.length; r++) {
+      if (terrainGrid[r].length !== cols)
+        throw new Error(`parseLevel: terrainStr row ${r} has ${terrainGrid[r].length} columns but piece grid has ${cols}`);
+    }
+
+    if (terrainGrid[hippoStart.row][hippoStart.col] !== '~')
+      throw new Error(`parseLevel: hippo start (${hippoStart.row},${hippoStart.col}) is not on a river cell`);
+    if (terrainGrid[0][mamaCol] !== '~')
+      throw new Error(`parseLevel: mama destination (0,${mamaCol}) is not on a river cell`);
+
+    riverCells = new Set<string>();
+    for (let r = 0; r < terrainGrid.length; r++) {
+      for (let c = 0; c < terrainGrid[r].length; c++) {
+        if (terrainGrid[r][c] === '~') riverCells.add(`${r},${c}`);
+      }
+    }
+  }
+
+  return { id, label, rows, cols, logs, hippoStart, mamaCol, riverCells };
 }

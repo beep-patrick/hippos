@@ -1,4 +1,4 @@
-import type { GameState } from './types';
+import type { GameState, Level } from './types';
 
 const CELL_PX = 56; // pixel size of each grid cell
 
@@ -7,7 +7,7 @@ export function cellSize(): number {
 }
 
 // Build the static grid background (called once).
-export function buildGrid(container: HTMLElement, rows: number, cols: number): void {
+export function buildGrid(container: HTMLElement, rows: number, cols: number, riverCells?: Set<string>): void {
   const grid = container.querySelector<HTMLElement>('#grid')!;
   grid.style.width = `${cols * CELL_PX}px`;
   grid.style.height = `${rows * CELL_PX}px`;
@@ -17,10 +17,23 @@ export function buildGrid(container: HTMLElement, rows: number, cols: number): v
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const cell = document.createElement('div');
-      cell.className = 'cell';
+      cell.dataset.row = String(r);
+      cell.dataset.col = String(c);
+      const terrain = (!riverCells || riverCells.has(`${r},${c}`)) ? 'river' : 'bank';
+      cell.className = `cell ${terrain}`;
       grid.appendChild(cell);
     }
   }
+}
+
+// Update terrain classes on existing cell divs (for level switching).
+export function updateTerrainClasses(container: HTMLElement, level: Level): void {
+  const grid = container.querySelector<HTMLElement>('#grid')!;
+  grid.querySelectorAll<HTMLElement>('.cell').forEach(cell => {
+    const isRiver = !level.riverCells || level.riverCells.has(`${cell.dataset.row},${cell.dataset.col}`);
+    cell.classList.toggle('river', isRiver);
+    cell.classList.toggle('bank', !isRiver);
+  });
 }
 
 // Render (or re-render) all game pieces onto the grid.
