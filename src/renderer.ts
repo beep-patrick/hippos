@@ -76,22 +76,20 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     grid.appendChild(el);
   }
 
-  // Render hippo obstacles.
+  // Render hippo obstacles (grey logs for now; real art TBD).
   for (const obstacle of state.hippoObstacles) {
     const el = document.createElement('div');
-    el.className = 'piece hippo-obstacle';
+    el.className = `piece hippo-obstacle-${obstacle.orientation}`;
     el.dataset.id = obstacle.id;
-    el.textContent = '🦛';
 
     const w = obstacle.orientation === 'horizontal' ? 2 * CELL_PX : CELL_PX;
     const h = obstacle.orientation === 'vertical'   ? 2 * CELL_PX : CELL_PX;
 
-    el.style.left     = `${obstacle.col * CELL_PX}px`;
-    el.style.top      = `${obstacle.row * CELL_PX}px`;
-    el.style.width    = `${w}px`;
-    el.style.height   = `${h}px`;
-    el.style.fontSize = `${Math.round(CELL_PX * 0.78)}px`;
-    el.style.zIndex   = '3';
+    el.style.left   = `${obstacle.col * CELL_PX}px`;
+    el.style.top    = `${obstacle.row * CELL_PX}px`;
+    el.style.width  = `${w}px`;
+    el.style.height = `${h}px`;
+    el.style.zIndex = '3';
 
     grid.appendChild(el);
   }

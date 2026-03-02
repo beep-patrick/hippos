@@ -136,10 +136,29 @@
         filter: sepia(1) hue-rotate(290deg) saturate(1.5) brightness(1.1);
       }
 
-      .piece.hippo-obstacle {
-        z-index: 3;
-        color: rgba(0,0,0,1);
-        filter: sepia(1) hue-rotate(330deg) saturate(3) brightness(0.85);
+      .piece.hippo-obstacle-horizontal,
+      .piece.hippo-obstacle-vertical {
+        background: transparent;
+        border: none;
+      }
+
+      .piece.hippo-obstacle-horizontal::before,
+      .piece.hippo-obstacle-vertical::before {
+        content: '';
+        position: absolute;
+        background: #888;
+        border: 2px solid #666;
+        border-radius: 4px;
+      }
+
+      .piece.hippo-obstacle-horizontal::before {
+        left: 0; right: 0;
+        top: 20%; bottom: 20%;
+      }
+
+      .piece.hippo-obstacle-vertical::before {
+        top: 0; bottom: 0;
+        left: 20%; right: 20%;
       }
 
       #win-overlay {

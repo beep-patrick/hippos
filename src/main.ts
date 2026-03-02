@@ -49,9 +49,29 @@ function startGame(index: number): void {
   });
 }
 
-restartBtn.addEventListener('click', () => {
-  const hasNext = currentLevelIndex + 1 < levels.length;
-  startGame(hasNext ? currentLevelIndex + 1 : 0);
+function getLevelFromUrl(): number {
+  const match = window.location.pathname.match(/\/(\d+)$/);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    if (num >= 1 && num <= levels.length) return num - 1;
+  }
+  return 0;
+}
+
+function navigateTo(index: number): void {
+  history.pushState({ levelIndex: index }, '', `/${index + 1}`);
+  startGame(index);
+}
+
+window.addEventListener('popstate', (e) => {
+  startGame(e.state?.levelIndex ?? getLevelFromUrl());
 });
 
-startGame(0);
+restartBtn.addEventListener('click', () => {
+  const hasNext = currentLevelIndex + 1 < levels.length;
+  navigateTo(hasNext ? currentLevelIndex + 1 : 0);
+});
+
+const initialIndex = getLevelFromUrl();
+history.replaceState({ levelIndex: initialIndex }, '', `/${initialIndex + 1}`);
+startGame(initialIndex);
