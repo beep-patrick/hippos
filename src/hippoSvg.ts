@@ -1,0 +1,35 @@
+export const HIPPO_SVG = `<svg xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 100 100" style="display:block;width:100%;height:100%">
+  <defs>
+    <radialGradient id="blush">
+      <stop offset="0%"   stop-color="#FF9EB5" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FF9EB5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- body -->
+  <rect x="16" y="36" width="68" height="61" rx="16" ry="16"
+    fill="#6D91C8" stroke="#4A6FA5" stroke-width="3" />
+  <!-- ears (behind head) -->
+  <ellipse cx="28" cy="42" rx="7" ry="9" transform="rotate(15,28,42)"
+    fill="#7B9FD4" stroke="#4A6FA5" stroke-width="3" />
+  <ellipse cx="72" cy="42" rx="7" ry="9" transform="rotate(-15,72,42)"
+    fill="#7B9FD4" stroke="#4A6FA5" stroke-width="3" />
+  <!-- head (covers inner ear overlap) -->
+  <rect x="26" y="4" width="48" height="38" rx="10" ry="10"
+    fill="#7B9FD4" stroke="#4A6FA5" stroke-width="3" />
+  <!-- ear fill on top of head stroke — smaller by stroke half-width so ear outline stays intact -->
+  <ellipse cx="28" cy="42" rx="5.5" ry="7.5" transform="rotate(15,28,42)" fill="#7B9FD4" />
+  <ellipse cx="72" cy="42" rx="5.5" ry="7.5" transform="rotate(-15,72,42)" fill="#7B9FD4" />
+  <!-- inner ears -->
+  <ellipse cx="28" cy="42" rx="3.5" ry="5" transform="rotate(15,28,42)" fill="#9BB8D8" />
+  <ellipse cx="72" cy="42" rx="3.5" ry="5" transform="rotate(-15,72,42)" fill="#9BB8D8" />
+  <!-- blush -->
+  <ellipse cx="34" cy="22" rx="11" ry="11" fill="url(#blush)" />
+  <ellipse cx="66" cy="22" rx="11" ry="11" fill="url(#blush)" />
+  <!-- nostrils -->
+  <ellipse cx="40" cy="14" rx="5" ry="3.5" fill="#5A7EB5" />
+  <ellipse cx="60" cy="14" rx="5" ry="3.5" fill="#5A7EB5" />
+  <!-- eyes -->
+  <path d="M 33,27 A 7,7 0 0,0 47,27" fill="none" stroke="#3A5888" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M 53,27 A 7,7 0 0,0 67,27" fill="none" stroke="#3A5888" stroke-width="2.5" stroke-linecap="round" />
+</svg>`;
