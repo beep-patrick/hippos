@@ -1,5 +1,6 @@
 import type { GameState, Level } from './types';
 import HIPPO_SVG from './hippo.svg?raw';
+import ADULT_HIPPO_SVG from './adultHippo.svg?raw';
 
 let CELL_PX = 56; // computed in buildGrid from viewport; fallback default
 
@@ -81,7 +82,7 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     grid.appendChild(el);
   }
 
-  // Render hippo obstacles (grey logs for now; real art TBD).
+  // Render hippo obstacles.
   for (const obstacle of state.hippoObstacles) {
     const el = document.createElement('div');
     el.className = `piece hippo-obstacle-${obstacle.orientation}`;
@@ -90,11 +91,20 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     const w = obstacle.orientation === 'horizontal' ? 2 * CELL_PX : CELL_PX;
     const h = obstacle.orientation === 'vertical'   ? 2 * CELL_PX : CELL_PX;
 
-    el.style.left   = `${obstacle.col * CELL_PX}px`;
-    el.style.top    = `${obstacle.row * CELL_PX}px`;
-    el.style.width  = `${w}px`;
-    el.style.height = `${h}px`;
-    el.style.zIndex = '3';
+    el.style.left     = `${obstacle.col * CELL_PX}px`;
+    el.style.top      = `${obstacle.row * CELL_PX}px`;
+    el.style.width    = `${w}px`;
+    el.style.height   = `${h}px`;
+    el.style.zIndex   = '3';
+    if (obstacle.orientation === 'horizontal') {
+      // Rotate 90° clockwise by changing viewBox to landscape and wrapping content in a transform.
+      const svg = ADULT_HIPPO_SVG
+        .replace('viewBox="0 0 100 200"', 'viewBox="0 0 200 100"')
+        .replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(200,0) rotate(90)">$2</g>$3');
+      el.innerHTML = svg;
+    } else {
+      el.innerHTML = ADULT_HIPPO_SVG;
+    }
 
     grid.appendChild(el);
   }
