@@ -1,5 +1,5 @@
 import type { GameState, Level } from './types';
-import { HIPPO_SVG } from './hippoSvg';
+import HIPPO_SVG from './hippo.svg?raw';
 
 let CELL_PX = 56; // computed in buildGrid from viewport; fallback default
 
