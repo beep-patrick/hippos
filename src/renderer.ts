@@ -96,14 +96,25 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     el.style.width    = `${w}px`;
     el.style.height   = `${h}px`;
     el.style.zIndex   = '3';
+    const letter = obstacle.id.replace('obstacle-', '');
+    const letterNum = letter.charCodeAt(0) - 'a'.charCodeAt(0) + 1; // a=1, b=2, ...
+    const flipped = letterNum % 2 === 0;
+
     if (obstacle.orientation === 'horizontal') {
-      // Rotate 90° clockwise by changing viewBox to landscape and wrapping content in a transform.
+      // Rotate SVG 90° clockwise into landscape viewBox.
+      // Normal:  translate(200,0) rotate(90) → head faces right
+      // Flipped: matrix(0,1,1,0,0,0) = reflect across y=x → head faces left
+      const groupTransform = flipped ? 'matrix(0,1,1,0,0,0)' : 'translate(200,0) rotate(90)';
       const svg = ADULT_HIPPO_SVG
         .replace('viewBox="0 0 100 200"', 'viewBox="0 0 200 100"')
-        .replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(200,0) rotate(90)">$2</g>$3');
+        .replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, `$1<g transform="${groupTransform}">$2</g>$3`);
       el.innerHTML = svg;
     } else {
-      el.innerHTML = ADULT_HIPPO_SVG;
+      // Normal: head at top. Flipped: translate(0,200) scale(1,-1) → head at bottom.
+      const svg = flipped
+        ? ADULT_HIPPO_SVG.replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(0,200) scale(1,-1)">$2</g>$3')
+        : ADULT_HIPPO_SVG;
+      el.innerHTML = svg;
     }
 
     grid.appendChild(el);
