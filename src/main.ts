@@ -4,17 +4,17 @@ import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin } from './re
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
 
-const rawCsvs = import.meta.glob('./levels/*.csv', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const rawNumbers = import.meta.glob('./levels/*.numbers', { eager: true }) as Record<string, { default: Array<{ name: string; csv: string }> }>;
 
-const levels = Object.entries(rawCsvs)
+const levels = Object.entries(rawNumbers)
   .sort(([a], [b]) => a.localeCompare(b))
-  .map(([path, content]) => {
-    const stem = path.split('/').pop()!.replace('.csv', '');
-    const label = stem.replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    return parseCsvLevel(stem, label, content);
-  });
+  .flatMap(([, mod]) =>
+    mod.default.map(({ name, csv }) =>
+      parseCsvLevel(name.toLowerCase().replace(/\s+/g, '-'), name, csv)
+    )
+  );
 
-if (levels.length === 0) throw new Error('No CSV levels found in src/levels/');
+if (levels.length === 0) throw new Error('No .numbers levels found in src/levels/');
 
 const container = document.getElementById('game-container')!;
 const restartBtn = document.getElementById('restart-btn')!;
@@ -32,7 +32,7 @@ function startGame(index: number): void {
   const state = initState(level);
 
   const labelEl = document.getElementById('level-label');
-  if (labelEl) labelEl.textContent = level.label;
+  if (labelEl) labelEl.textContent = /^\d+$/.test(level.label) ? `Level ${level.label}` : level.label;
 
   hideWin(container);
   const allWater = level.riverCells !== undefined && level.riverCells.size === level.rows * level.cols;

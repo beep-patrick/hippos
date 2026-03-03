@@ -21,13 +21,11 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
   // 2. Split each line on commas → 2D grid of cell strings
   const grid: string[][] = lines.map(line => line.split(',').map(c => c.trim()));
 
-  // 3. Validate consistent column count
-  const cols = grid[0].length;
-  for (let r = 1; r < grid.length; r++) {
-    if (grid[r].length !== cols)
-      throw new Error(
-        `parseCsvLevel: row ${r} has ${grid[r].length} cells but row 0 has ${cols} — all rows must be the same width`
-      );
+  // 3. Infer cols from widest row; pad shorter rows with empty strings.
+  // This tolerates CSV editors that strip trailing empty cells.
+  const cols = Math.max(...grid.map(row => row.length));
+  for (const row of grid) {
+    while (row.length < cols) row.push('');
   }
   const rows = grid.length;
 
