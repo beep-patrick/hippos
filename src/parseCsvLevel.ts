@@ -82,17 +82,33 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
 
   let mamaPos: { row: number; col: number };
   let mamaWidth: number;
+  let mamaHeight: number;
   if (mamaCells.length === 2) {
-    if (mamaCells[0].row !== mamaCells[1].row)
-      throw new Error('parseCsvLevel: two M cells must be in the same row');
-    const [left, right] = mamaCells[0].col < mamaCells[1].col ? mamaCells : [mamaCells[1], mamaCells[0]];
-    if (right.col - left.col !== 1)
-      throw new Error('parseCsvLevel: two M cells must be adjacent (no gap)');
-    mamaPos = { row: left.row, col: left.col };
-    mamaWidth = 2;
+    const sameRow = mamaCells[0].row === mamaCells[1].row;
+    const sameCol = mamaCells[0].col === mamaCells[1].col;
+    if (!sameRow && !sameCol)
+      throw new Error('parseCsvLevel: two M cells must be in the same row or same column');
+    if (sameRow) {
+      // Horizontal mama
+      const [left, right] = mamaCells[0].col < mamaCells[1].col ? mamaCells : [mamaCells[1], mamaCells[0]];
+      if (right.col - left.col !== 1)
+        throw new Error('parseCsvLevel: two M cells must be adjacent (no gap)');
+      mamaPos = { row: left.row, col: left.col };
+      mamaWidth = 2;
+      mamaHeight = 1;
+    } else {
+      // Vertical mama
+      const [top, bottom] = mamaCells[0].row < mamaCells[1].row ? mamaCells : [mamaCells[1], mamaCells[0]];
+      if (bottom.row - top.row !== 1)
+        throw new Error('parseCsvLevel: two M cells must be adjacent (no gap)');
+      mamaPos = { row: top.row, col: top.col };
+      mamaWidth = 1;
+      mamaHeight = 2;
+    }
   } else {
     mamaPos = mamaCells[0];
     mamaWidth = 1;
+    mamaHeight = 1;
   }
 
   // 5. Build Log objects
@@ -166,5 +182,5 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
     });
   }
 
-  return { id, label, rows, cols, logs, hippoObstacles, hippoStart, mamaPos, mamaWidth, riverCells, boulders };
+  return { id, label, rows, cols, logs, hippoObstacles, hippoStart, mamaPos, mamaWidth, mamaHeight, riverCells, boulders };
 }

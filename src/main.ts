@@ -1,6 +1,6 @@
 import { parseCsvLevel } from './parseCsvLevel';
 import { initState } from './gameState';
-import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin } from './renderer';
+import { buildGrid, updateTerrainClasses, renderPieces, updateMoveCount, showWin, hideWin } from './renderer';
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
 
@@ -38,6 +38,7 @@ function startGame(index: number): void {
   if (labelEl) labelEl.textContent = level.label;
 
   hideWin(container);
+  updateTerrainClasses(container, level);
   renderPieces(container, state);
   updateMoveCount(0);
 

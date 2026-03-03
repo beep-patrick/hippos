@@ -25,7 +25,8 @@ export interface Level {
   hippoObstacles: HippoObstacle[];
   hippoStart: { row: number; col: number };
   mamaPos: { row: number; col: number }; // mama hippo's anchor (top-left) cell
-  mamaWidth?: number; // cells mama spans horizontally (default 1)
+  mamaWidth?: number;  // cells mama spans horizontally (default 1)
+  mamaHeight?: number; // cells mama spans vertically (default 1)
   riverCells?: Set<string>; // "row,col" keys; undefined = whole grid is passable
   boulders?: Array<{ row: number; col: number }>; // immovable obstacles
 }

@@ -145,18 +145,19 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   hippo.style.zIndex = '5';
   grid.appendChild(hippo);
 
-  // Render mama hippo — same as a horizontal obstacle but using the mama SVG.
+  // Render mama hippo — portrait, head facing down toward the baby.
+  // translate(0,200) scale(1,-1) flips the SVG vertically so the head (originally
+  // at y=0) ends up at the bottom of the viewBox (y=200), pointing toward baby.
   const mamaSvg = MAMA_HIPPO_SVG
-    .replace('viewBox="0 0 100 200"', 'viewBox="0 0 200 100"')
-    .replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(200,0) rotate(90)">$2</g>$3');
+    .replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(0,200) scale(1,-1)">$2</g>$3');
   const mama = document.createElement('div');
   mama.className = 'piece mama';
   mama.dataset.id = 'mama';
   mama.innerHTML = mamaSvg;
   mama.style.left   = `${state.level.mamaPos.col * CELL_PX}px`;
   mama.style.top    = `${state.level.mamaPos.row * CELL_PX}px`;
-  mama.style.width  = `${(state.level.mamaWidth ?? 1) * CELL_PX}px`;
-  mama.style.height = `${CELL_PX}px`;
+  mama.style.width  = `${CELL_PX}px`;
+  mama.style.height = `${(state.level.mamaHeight ?? 1) * CELL_PX}px`;
   mama.style.zIndex = '4';
   grid.appendChild(mama);
 }
