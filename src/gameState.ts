@@ -136,8 +136,6 @@ export function moveHippoObstacle(state: GameState, obstacleId: string, newRow: 
 // Try to move the hippo by (dr, dc).
 // Returns true and mutates if valid.
 export function moveHippo(state: GameState, dr: number, dc: number): boolean {
-  if (state.won) return false;
-
   const { row, col } = state.hippoPos;
   const newRow = row + dr;
   const newCol = col + dc;
@@ -150,14 +148,15 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
   if (blocked.has(`${newRow},${newCol}`)) return false;
 
   state.hippoPos = { row: newRow, col: newCol };
+  return true;
+}
 
+// Check whether the hippo's current position triggers the win condition.
+export function checkWin(state: GameState): boolean {
+  const { row, col } = state.hippoPos;
   const { row: mr, col: mc } = state.level.mamaPos;
   const mw = state.level.mamaWidth ?? 1;
-  if (Math.abs(newRow - mr) <= 1 && newCol >= mc - 1 && newCol <= mc + mw) {
-    state.won = true;
-  }
-
-  return true;
+  return Math.abs(row - mr) <= 1 && col >= mc - 1 && col <= mc + mw;
 }
 
 // Compute how far up/down the hippo can move from a given cell.

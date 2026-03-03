@@ -1,5 +1,5 @@
 import type { GameState } from './types';
-import { moveLog, moveHippo, moveHippoObstacle, logSlideRange, hippoObstacleSlideRange, hippoSlideRangeAt, hippoVerticalRangeAt } from './gameState';
+import { moveLog, moveHippo, moveHippoObstacle, checkWin, logSlideRange, hippoObstacleSlideRange, hippoSlideRangeAt, hippoVerticalRangeAt } from './gameState';
 import { updatePiecePosition, updateMoveCount, cellSize } from './renderer';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -167,7 +167,6 @@ export function attachInputHandlers(
       const targetCol = clamp(Math.round(a.startCol + dx / CELL), 0, cols - 1);
       while (state.hippoPos.row !== targetRow || state.hippoPos.col !== targetCol) {
         if (!stepHippoToward(state, targetRow, targetCol)) break;
-        if (state.won) break;
       }
 
       const hRange = hippoSlideRangeAt(state, state.hippoPos.row, state.hippoPos.col);
@@ -243,7 +242,7 @@ export function attachInputHandlers(
         hippoEl.style.top  = `${state.hippoPos.row * CELL}px`;
       }
       updateMoveCount(state.moves);
-      if (state.won) onWin();
+      if (checkWin(state)) onWin();
     }
 
     active = null;
