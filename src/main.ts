@@ -1,6 +1,6 @@
 import { parseCsvLevel } from './parseCsvLevel';
 import { initState } from './gameState';
-import { buildGrid, updateTerrainClasses, renderPieces, updateMoveCount, showWin, hideWin } from './renderer';
+import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin } from './renderer';
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
 
@@ -22,9 +22,6 @@ const restartBtn = document.getElementById('restart-btn')!;
 let currentLevelIndex = 0;
 let cleanupInput: (() => void) | null = null;
 
-// Build the static grid once.
-buildGrid(container, levels[0].rows, levels[0].cols, levels[0].riverCells);
-
 function startGame(index: number): void {
   currentLevelIndex = index;
   const level = levels[index];
@@ -38,7 +35,10 @@ function startGame(index: number): void {
   if (labelEl) labelEl.textContent = level.label;
 
   hideWin(container);
-  updateTerrainClasses(container, level);
+  const allWater = level.riverCells !== undefined && level.riverCells.size === level.rows * level.cols;
+  document.body.style.background = allWater ? '#3a7bbf' : '#4a7a30';
+  const visibleRows = level.rows - (level.bleedTop ?? 0) - (level.bleedBottom ?? 0);
+  buildGrid(container, level.rows, level.cols, level.riverCells, visibleRows);
   renderPieces(container, state);
   updateMoveCount(0);
 

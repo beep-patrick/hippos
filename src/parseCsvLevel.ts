@@ -182,5 +182,38 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
     });
   }
 
-  return { id, label, rows, cols, logs, hippoObstacles, hippoStart, mamaPos, mamaWidth, mamaHeight, riverCells, boulders };
+  // Add 1 bleed row at top and bottom. Shift all piece positions down by 1, then
+  // copy the terrain of the first/last real rows into the bleed rows.
+  const bleedTop = 1;
+  const bleedBottom = 1;
+
+  hippoStart.row += 1;
+  mamaPos.row    += 1;
+  for (const l of logs)           l.row += 1;
+  for (const h of hippoObstacles) h.row += 1;
+  for (const b of boulders)       b.row += 1;
+
+  // Rebuild riverCells: shift existing rows, then fill bleed rows from adjacent real rows.
+  let finalRiverCells = riverCells;
+  if (riverCells.size > 0) {
+    const shifted = new Set<string>();
+    for (const key of riverCells) {
+      const [r, c] = key.split(',');
+      shifted.add(`${Number(r) + 1},${c}`);
+    }
+    // Top bleed row (row 0) mirrors new row 1 (original row 0).
+    for (let c = 0; c < cols; c++) {
+      if (shifted.has(`1,${c}`)) shifted.add(`0,${c}`);
+    }
+    // Bottom bleed row mirrors new row `rows` (original last row).
+    const newLastReal = rows; // rows not yet incremented
+    for (let c = 0; c < cols; c++) {
+      if (shifted.has(`${newLastReal},${c}`)) shifted.add(`${newLastReal + 1},${c}`);
+    }
+    finalRiverCells = shifted;
+  }
+
+  const finalRows = rows + 2;
+
+  return { id, label, rows: finalRows, cols, logs, hippoObstacles, hippoStart, mamaPos, mamaWidth, mamaHeight, riverCells: finalRiverCells, boulders, bleedTop, bleedBottom };
 }

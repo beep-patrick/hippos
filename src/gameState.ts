@@ -84,6 +84,10 @@ function inBounds(row: number, col: number, rows: number, cols: number): boolean
   return row >= 0 && row < rows && col >= 0 && col < cols;
 }
 
+function isBleedRow(row: number, level: Level): boolean {
+  return row < (level.bleedTop ?? 0) || row >= level.rows - (level.bleedBottom ?? 0);
+}
+
 // Try to move a log to a new anchor position.
 // Returns true and mutates the log if valid.
 export function moveLog(state: GameState, logId: string, newRow: number, newCol: number): boolean {
@@ -96,6 +100,7 @@ export function moveLog(state: GameState, logId: string, newRow: number, newCol:
   const { rows, cols } = state.level;
   const newCells = logCells(log, newRow, newCol);
   if (!newCells.every(c => inBounds(c.row, c.col, rows, cols))) return false;
+  if (newCells.some(c => isBleedRow(c.row, state.level))) return false;
 
   const blocked = occupiedCells(state.logs, state.hippoObstacles, logId, state.hippoPos, state.level.mamaPos, state.level.mamaWidth, state.level.mamaHeight, state.level.boulders);
   if (newCells.some(c => blocked.has(`${c.row},${c.col}`))) return false;
@@ -126,6 +131,7 @@ export function moveHippoObstacle(state: GameState, obstacleId: string, newRow: 
   }
 
   if (!newCells.every(c => inBounds(c.row, c.col, rows, cols))) return false;
+  if (newCells.some(c => isBleedRow(c.row, state.level))) return false;
   if (!newCells.every(c => isRiver(state.level, c.row, c.col))) return false;
 
   const blocked = occupiedCells(state.logs, state.hippoObstacles, obstacleId, state.hippoPos, state.level.mamaPos, state.level.mamaWidth, state.level.mamaHeight, state.level.boulders);
@@ -146,6 +152,7 @@ export function moveHippo(state: GameState, dr: number, dc: number): boolean {
 
   const { rows, cols } = state.level;
   if (!inBounds(newRow, newCol, rows, cols)) return false;
+  if (isBleedRow(newRow, state.level)) return false;
   if (!isRiver(state.level, newRow, newCol)) return false;
 
   const blocked = occupiedCells(state.logs, state.hippoObstacles, null, null, state.level.mamaPos, state.level.mamaWidth, state.level.mamaHeight, state.level.boulders);
@@ -170,14 +177,16 @@ export function checkWin(state: GameState): boolean {
 // Compute how far up/down the hippo can move from a given cell.
 export function hippoVerticalRangeAt(state: GameState, row: number, col: number): { min: number; max: number } {
   const { rows } = state.level;
+  const bleedTop = state.level.bleedTop ?? 0;
+  const bleedBottom = state.level.bleedBottom ?? 0;
   const blocked = occupiedCells(state.logs, state.hippoObstacles, null, null, state.level.mamaPos, state.level.mamaWidth, state.level.mamaHeight, state.level.boulders);
   let min = row;
-  for (let r = row - 1; r >= 0; r--) {
+  for (let r = row - 1; r >= bleedTop; r--) {
     if (blocked.has(`${r},${col}`) || !isRiver(state.level, r, col)) break;
     min = r;
   }
   let max = row;
-  for (let r = row + 1; r < rows; r++) {
+  for (let r = row + 1; r < rows - bleedBottom; r++) {
     if (blocked.has(`${r},${col}`) || !isRiver(state.level, r, col)) break;
     max = r;
   }
@@ -217,6 +226,9 @@ export function logSlideRange(state: GameState, logId: string): { min: number; m
   const { rows, cols } = state.level;
   const blocked = occupiedCells(state.logs, state.hippoObstacles, logId, state.hippoPos, state.level.mamaPos, state.level.mamaWidth, state.level.mamaHeight, state.level.boulders);
 
+  const bleedTop = state.level.bleedTop ?? 0;
+  const bleedBottom = state.level.bleedBottom ?? 0;
+
   if (log.orientation === 'horizontal') {
     let min = log.col;
     for (let c = log.col - 1; c >= 0; c--) {
@@ -231,12 +243,12 @@ export function logSlideRange(state: GameState, logId: string): { min: number; m
     return { min, max };
   } else {
     let min = log.row;
-    for (let r = log.row - 1; r >= 0; r--) {
+    for (let r = log.row - 1; r >= bleedTop; r--) {
       if (blocked.has(`${r},${log.col}`)) break;
       min = r;
     }
     let max = log.row;
-    for (let r = log.row + 1; r + log.length - 1 < rows; r++) {
+    for (let r = log.row + 1; r + log.length - 1 < rows - bleedBottom; r++) {
       if (blocked.has(`${r + log.length - 1},${log.col}`)) break;
       max = r;
     }
@@ -251,6 +263,9 @@ export function hippoObstacleSlideRange(state: GameState, obstacleId: string): {
 
   const { rows, cols } = state.level;
   const blocked = occupiedCells(state.logs, state.hippoObstacles, obstacleId, state.hippoPos, state.level.mamaPos, state.level.mamaWidth, state.level.mamaHeight, state.level.boulders);
+
+  const bleedTop = state.level.bleedTop ?? 0;
+  const bleedBottom = state.level.bleedBottom ?? 0;
 
   if (obstacle.orientation === 'horizontal') {
     let min = obstacle.col;
@@ -268,13 +283,13 @@ export function hippoObstacleSlideRange(state: GameState, obstacleId: string): {
     return { min, max };
   } else {
     let min = obstacle.row;
-    for (let r = obstacle.row - 1; r >= 0; r--) {
+    for (let r = obstacle.row - 1; r >= bleedTop; r--) {
       if (blocked.has(`${r},${obstacle.col}`)) break;
       if (!isRiver(state.level, r, obstacle.col)) break;
       min = r;
     }
     let max = obstacle.row;
-    for (let r = obstacle.row + 1; r + 1 < rows; r++) {
+    for (let r = obstacle.row + 1; r + 1 < rows - bleedBottom; r++) {
       if (blocked.has(`${r + 1},${obstacle.col}`)) break;
       if (!isRiver(state.level, r + 1, obstacle.col)) break;
       max = r;

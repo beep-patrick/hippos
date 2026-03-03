@@ -9,31 +9,30 @@ function hippoPieceSvg(_size: number): string {
   return HIPPO_SVG;
 }
 
-const GRID_PADDING = 48; // total left+right margin around the grid
-const UI_HEIGHT    = 80; // #ui bar + margins above the grid
-
-function computeCellPx(rows: number, cols: number): number {
-  // Use visualViewport when available — on Safari it correctly excludes
-  // the address bar and toolbar from the available height.
-  const vw = window.visualViewport?.width  ?? window.innerWidth;
-  const vh = window.visualViewport?.height ?? window.innerHeight;
-  const maxW = Math.floor((vw - GRID_PADDING) / cols);
-  const maxH = Math.floor((vh - UI_HEIGHT)    / rows);
-  return Math.max(40, Math.min(maxW, maxH));
+function computeCellPx(visibleRows: number, cols: number): number {
+  // The game-container fills whatever space CSS gives it (full width, remaining
+  // height after the header). Measure it directly — no arithmetic needed.
+  const container = document.getElementById('game-container')!;
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  return Math.min(Math.floor(w / cols), Math.floor(h / visibleRows));
 }
 
 export function cellSize(): number {
   return CELL_PX;
 }
 
-// Build the static grid background (called once).
-export function buildGrid(container: HTMLElement, rows: number, cols: number, riverCells?: Set<string>): void {
-  CELL_PX = computeCellPx(rows, cols);
+// Build the static grid background (called once per level).
+// visibleRows: the rows that should fit on screen (excludes bleed rows).
+export function buildGrid(container: HTMLElement, rows: number, cols: number, riverCells?: Set<string>, visibleRows?: number): void {
+  CELL_PX = computeCellPx(visibleRows ?? rows, cols);
   const grid = container.querySelector<HTMLElement>('#grid')!;
   grid.style.width = `${cols * CELL_PX}px`;
   grid.style.height = `${rows * CELL_PX}px`;
   grid.style.gridTemplateColumns = `repeat(${cols}, ${CELL_PX}px)`;
   grid.style.gridTemplateRows = `repeat(${rows}, ${CELL_PX}px)`;
+
+  grid.querySelectorAll('.cell').forEach(el => el.remove());
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
