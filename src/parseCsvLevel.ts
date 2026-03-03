@@ -33,6 +33,7 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
 
   // 4. Scan cells
   const riverCells = new Set<string>();
+  const boulders: Array<{ row: number; col: number }> = [];
   let hippoStart: { row: number; col: number } | null = null;
   const mamaCells: Array<{ row: number; col: number }> = [];
   const logLetterCells = new Map<string, Array<{ row: number; col: number }>>();
@@ -45,6 +46,7 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
       const cell = grid[r][c];
 
       if (cell.includes('~')) riverCells.add(`${r},${c}`);
+      if (cell.includes('*')) { boulders.push({ row: r, col: c }); continue; }
 
       const letterMatch = cell.match(/[A-Za-z]/);
       if (!letterMatch) continue;
@@ -164,5 +166,5 @@ export function parseCsvLevel(id: string, label: string, csvStr: string): Level 
     });
   }
 
-  return { id, label, rows, cols, logs, hippoObstacles, hippoStart, mamaPos, mamaWidth, riverCells };
+  return { id, label, rows, cols, logs, hippoObstacles, hippoStart, mamaPos, mamaWidth, riverCells, boulders };
 }

@@ -121,6 +121,18 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     grid.appendChild(el);
   }
 
+  // Render boulders.
+  for (const boulder of state.level.boulders ?? []) {
+    const el = document.createElement('div');
+    el.className = 'piece boulder';
+    el.style.left   = `${boulder.col * CELL_PX}px`;
+    el.style.top    = `${boulder.row * CELL_PX}px`;
+    el.style.width  = `${CELL_PX}px`;
+    el.style.height = `${CELL_PX}px`;
+    el.style.zIndex = '2';
+    grid.appendChild(el);
+  }
+
   // Render hippo.
   const hippo = document.createElement('div');
   hippo.className = 'piece hippo';

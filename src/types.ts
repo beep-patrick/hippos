@@ -27,6 +27,7 @@ export interface Level {
   mamaPos: { row: number; col: number }; // mama hippo's anchor (top-left) cell
   mamaWidth?: number; // cells mama spans horizontally (default 1)
   riverCells?: Set<string>; // "row,col" keys; undefined = whole grid is passable
+  boulders?: Array<{ row: number; col: number }>; // immovable obstacles
 }
 
 export interface GameState {
