@@ -15,7 +15,7 @@ function computeCellPx(visibleRows: number, cols: number): number {
   const container = document.getElementById('game-container')!;
   const w = container.clientWidth;
   const h = container.clientHeight;
-  return Math.min(Math.floor(w / cols), Math.floor(h / visibleRows));
+  return Math.min(w / cols, h / visibleRows);
 }
 
 export function cellSize(): number {
@@ -40,7 +40,8 @@ export function buildGrid(container: HTMLElement, rows: number, cols: number, ri
       cell.dataset.row = String(r);
       cell.dataset.col = String(c);
       const terrain = (!riverCells || riverCells.has(`${r},${c}`)) ? 'river' : 'bank';
-      cell.className = `cell ${terrain}`;
+      const isBleed = visibleRows !== undefined && visibleRows < rows && (r === 0 || r === rows - 1);
+      cell.className = `cell ${terrain}${isBleed ? ' bleed' : ''}`;
       grid.appendChild(cell);
     }
   }
