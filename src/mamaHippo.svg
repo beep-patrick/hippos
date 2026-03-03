@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 100 200" style="display:block;width:100%;height:100%">
+  <!-- tail (behind body) -->
+  <rect x="45" y="184" width="10" height="14" rx="5" ry="5" fill="#B07878" stroke="#5C3A42" stroke-width="3" />
+  <!-- body -->
+  <rect x="3" y="67" width="94" height="125" rx="22" ry="22"
+    fill="#B07878" stroke="#5C3A42" stroke-width="3" />
+  <!-- ears (behind head) -->
+  <ellipse cx="19" cy="76" rx="10" ry="12.5" transform="rotate(15,19,76)"
+    fill="#C08888" stroke="#5C3A42" stroke-width="3" />
+  <ellipse cx="81" cy="76" rx="10" ry="12.5" transform="rotate(-15,81,76)"
+    fill="#C08888" stroke="#5C3A42" stroke-width="3" />
+  <!-- head -->
+  <rect x="17" y="3" width="67" height="73" rx="14" ry="14"
+    fill="#C08888" stroke="#5C3A42" stroke-width="3" />
+  <!-- ear fill on top of head stroke -->
+  <ellipse cx="19" cy="76" rx="8.5" ry="11" transform="rotate(15,19,76)" fill="#C08888" />
+  <ellipse cx="81" cy="76" rx="8.5" ry="11" transform="rotate(-15,81,76)" fill="#C08888" />
+  <!-- inner ears -->
+  <ellipse cx="19" cy="76" rx="5" ry="7" transform="rotate(15,19,76)" fill="#E0A8A0" />
+  <ellipse cx="81" cy="76" rx="5" ry="7" transform="rotate(-15,81,76)" fill="#E0A8A0" />
+  <!-- nostrils -->
+  <ellipse cx="36" cy="17" rx="7" ry="5" fill="#5C3A42" />
+  <ellipse cx="64" cy="17" rx="7" ry="5" fill="#5C3A42" />
+  <!-- eyes -->
+  <path d="M 26,50 A 10,10 0 0,0 46,50" fill="none" stroke="#3C2028" stroke-width="3.5" stroke-linecap="round" />
+  <path d="M 54,50 A 10,10 0 0,0 74,50" fill="none" stroke="#3C2028" stroke-width="3.5" stroke-linecap="round" />
+</svg>

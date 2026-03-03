@@ -1,6 +1,7 @@
 import type { GameState, Level } from './types';
 import HIPPO_SVG from './hippo.svg?raw';
 import ADULT_HIPPO_SVG from './adultHippo.svg?raw';
+import MAMA_HIPPO_SVG from './mamaHippo.svg?raw';
 
 let CELL_PX = 56; // computed in buildGrid from viewport; fallback default
 
@@ -132,17 +133,19 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   hippo.style.zIndex = '5';
   grid.appendChild(hippo);
 
-  // Render mama hippo at her position in the terrain.
+  // Render mama hippo — same as a horizontal obstacle but using the mama SVG.
+  const mamaSvg = MAMA_HIPPO_SVG
+    .replace('viewBox="0 0 100 200"', 'viewBox="0 0 200 100"')
+    .replace(/(<svg[^>]*>)([\s\S]*)(<\/svg>)/, '$1<g transform="translate(200,0) rotate(90)">$2</g>$3');
   const mama = document.createElement('div');
   mama.className = 'piece mama';
   mama.dataset.id = 'mama';
-  mama.textContent = '🦛';
-  mama.style.left     = `${state.level.mamaPos.col * CELL_PX}px`;
-  mama.style.top      = `${state.level.mamaPos.row * CELL_PX - Math.round(CELL_PX * 0.2)}px`;
-  mama.style.width    = `${(state.level.mamaWidth ?? 1) * CELL_PX}px`;
-  mama.style.height   = `${CELL_PX}px`;
-  mama.style.fontSize = `${Math.round(CELL_PX * 1.85)}px`;
-  mama.style.zIndex   = '4';
+  mama.innerHTML = mamaSvg;
+  mama.style.left   = `${state.level.mamaPos.col * CELL_PX}px`;
+  mama.style.top    = `${state.level.mamaPos.row * CELL_PX}px`;
+  mama.style.width  = `${(state.level.mamaWidth ?? 1) * CELL_PX}px`;
+  mama.style.height = `${CELL_PX}px`;
+  mama.style.zIndex = '4';
   grid.appendChild(mama);
 }
 
