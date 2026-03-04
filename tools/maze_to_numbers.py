@@ -13,7 +13,7 @@ import sys
 from PIL import Image
 from numbers_parser import Document, Style, RGB
 
-BLUE = RGB(100, 160, 255)
+BLUE = RGB(72, 179, 255)
 WHITE = RGB(255, 255, 255)
 
 blue_style = Style(bg_color=BLUE)
