@@ -6,11 +6,11 @@ import type { Plugin } from 'vite';
  * Vite plugin that loads Apple Numbers (.numbers) files as level data.
  *
  * Each sheet in the Numbers file becomes one level. Cell encoding:
- *   - Cell value   → piece code (H, M, A–Z, or empty)
- *   - Any non-default background color → water tile (prepends ~)
+ *   - Cell value        → piece code (H, M, A–Z, or empty)
+ *   - White background or no fill → bank/shoreline (no prefix)
+ *   - Colored background (e.g. blue) → water tile (prepends ~)
  *
- * So a blue-shaded cell with value "A" produces "~A";
- * a blue-shaded empty cell produces "~"; a plain cell with "A" produces "A".
+ * Examples: blue cell + "A" → "~A"; blue empty → "~"; white/plain cell → no prefix.
  *
  * Requires macOS with Numbers.app installed.
  */
@@ -35,7 +35,12 @@ function run() {
         var val = cell.value();
         var bg = cell.backgroundColor();
         var valStr = (val === null || val === undefined) ? '' : String(val);
-        cells.push(bg !== null ? '~' + valStr : valStr);
+        // bg is [r, g, b] with components 0–1.
+        //   null or white (all > 0.95) → bank/shoreline: output valStr as-is
+        //   any other color (e.g. blue) → water: prepend '~'
+        var isWhite = bg !== null && bg[0] > 0.95 && bg[1] > 0.95 && bg[2] > 0.95;
+        var isWater = bg !== null && !isWhite;
+        cells.push(isWater ? '~' + valStr : valStr);
       }
       rows.push(cells.join(','));
     }
