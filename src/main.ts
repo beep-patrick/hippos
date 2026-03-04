@@ -1,6 +1,6 @@
 import { parseCsvLevel } from './parseCsvLevel';
 import { initState } from './gameState';
-import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin } from './renderer';
+import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin, startHeartAnimation, stopHeartAnimation } from './renderer';
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
 
@@ -43,10 +43,18 @@ function startGame(index: number): void {
   updateMoveCount(0);
 
   cleanupInput = attachInputHandlers(container, state, () => {
-    new Audio(hippoSoundUrl).play();
-    const hasNext = currentLevelIndex + 1 < levels.length;
-    restartBtn.textContent = hasNext ? 'Next Level' : 'Play Again';
-    showWin(container);
+    const audio = new Audio(hippoSoundUrl);
+    startHeartAnimation(container);
+    audio.play();
+    audio.addEventListener('ended', () => {
+      stopHeartAnimation(container);
+      const hasNext = currentLevelIndex + 1 < levels.length;
+      if (hasNext) {
+        navigateTo(currentLevelIndex + 1);
+      } else {
+        showWin(container, 'You finished the game! Ask your dad for more levels :)');
+      }
+    });
   });
 }
 
@@ -69,8 +77,8 @@ window.addEventListener('popstate', (e) => {
 });
 
 restartBtn.addEventListener('click', () => {
-  const hasNext = currentLevelIndex + 1 < levels.length;
-  navigateTo(hasNext ? currentLevelIndex + 1 : 0);
+  hideWin(container);
+  navigateTo(0);
 });
 
 const initialIndex = getLevelFromUrl();

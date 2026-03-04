@@ -32,6 +32,11 @@ export function buildGrid(container: HTMLElement, rows: number, cols: number, ri
   grid.style.gridTemplateColumns = `repeat(${cols}, ${CELL_PX}px)`;
   grid.style.gridTemplateRows = `repeat(${rows}, ${CELL_PX}px)`;
 
+  // Clean up any lingering heart animation from previous level.
+  const existingInterval = (grid as any)._heartInterval as number | undefined;
+  if (existingInterval !== undefined) { clearInterval(existingInterval); delete (grid as any)._heartInterval; }
+  grid.querySelector('#hearts-container')?.remove();
+
   grid.querySelectorAll('.cell').forEach(el => el.remove());
 
   for (let r = 0; r < rows; r++) {
@@ -72,11 +77,11 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     el.dataset.id = log.id;
 
     const w = log.orientation === 'horizontal' ? log.length * CELL_PX : CELL_PX;
-    const h = log.orientation === 'vertical'   ? log.length * CELL_PX : CELL_PX;
+    const h = log.orientation === 'vertical' ? log.length * CELL_PX : CELL_PX;
 
-    el.style.left   = `${log.col * CELL_PX}px`;
-    el.style.top    = `${log.row * CELL_PX}px`;
-    el.style.width  = `${w}px`;
+    el.style.left = `${log.col * CELL_PX}px`;
+    el.style.top = `${log.row * CELL_PX}px`;
+    el.style.width = `${w}px`;
     el.style.height = `${h}px`;
     el.style.zIndex = '2';
 
@@ -90,13 +95,13 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
     el.dataset.id = obstacle.id;
 
     const w = obstacle.orientation === 'horizontal' ? 2 * CELL_PX : CELL_PX;
-    const h = obstacle.orientation === 'vertical'   ? 2 * CELL_PX : CELL_PX;
+    const h = obstacle.orientation === 'vertical' ? 2 * CELL_PX : CELL_PX;
 
-    el.style.left     = `${obstacle.col * CELL_PX}px`;
-    el.style.top      = `${obstacle.row * CELL_PX}px`;
-    el.style.width    = `${w}px`;
-    el.style.height   = `${h}px`;
-    el.style.zIndex   = '3';
+    el.style.left = `${obstacle.col * CELL_PX}px`;
+    el.style.top = `${obstacle.row * CELL_PX}px`;
+    el.style.width = `${w}px`;
+    el.style.height = `${h}px`;
+    el.style.zIndex = '3';
     const letter = obstacle.id.replace('obstacle-', '');
     const letterNum = letter.charCodeAt(0) - 'a'.charCodeAt(0) + 1; // a=1, b=2, ...
     const flipped = letterNum % 2 === 0;
@@ -125,9 +130,9 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   for (const boulder of state.level.boulders ?? []) {
     const el = document.createElement('div');
     el.className = 'piece boulder';
-    el.style.left   = `${boulder.col * CELL_PX}px`;
-    el.style.top    = `${boulder.row * CELL_PX}px`;
-    el.style.width  = `${CELL_PX}px`;
+    el.style.left = `${boulder.col * CELL_PX}px`;
+    el.style.top = `${boulder.row * CELL_PX}px`;
+    el.style.width = `${CELL_PX}px`;
     el.style.height = `${CELL_PX}px`;
     el.style.zIndex = '2';
     grid.appendChild(el);
@@ -138,9 +143,9 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   hippo.className = 'piece hippo';
   hippo.dataset.id = 'hippo';
   hippo.innerHTML = hippoPieceSvg(CELL_PX);
-  hippo.style.left   = `${state.hippoPos.col * CELL_PX}px`;
-  hippo.style.top    = `${state.hippoPos.row * CELL_PX}px`;
-  hippo.style.width  = `${CELL_PX}px`;
+  hippo.style.left = `${state.hippoPos.col * CELL_PX}px`;
+  hippo.style.top = `${state.hippoPos.row * CELL_PX}px`;
+  hippo.style.width = `${CELL_PX}px`;
   hippo.style.height = `${CELL_PX}px`;
   hippo.style.zIndex = '5';
   grid.appendChild(hippo);
@@ -154,9 +159,9 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   mama.className = 'piece mama';
   mama.dataset.id = 'mama';
   mama.innerHTML = mamaSvg;
-  mama.style.left   = `${state.level.mamaPos.col * CELL_PX}px`;
-  mama.style.top    = `${state.level.mamaPos.row * CELL_PX}px`;
-  mama.style.width  = `${CELL_PX}px`;
+  mama.style.left = `${state.level.mamaPos.col * CELL_PX}px`;
+  mama.style.top = `${state.level.mamaPos.row * CELL_PX}px`;
+  mama.style.width = `${CELL_PX}px`;
   mama.style.height = `${(state.level.mamaHeight ?? 1) * CELL_PX}px`;
   mama.style.zIndex = '4';
   grid.appendChild(mama);
@@ -173,7 +178,7 @@ export function updatePiecePosition(
   const el = grid.querySelector<HTMLElement>(`[data-id="${id}"]`);
   if (!el) return;
   el.style.left = `${col * CELL_PX}px`;
-  el.style.top  = `${row * CELL_PX}px`;
+  el.style.top = `${row * CELL_PX}px`;
 }
 
 export function updateMoveCount(count: number): void {
@@ -181,10 +186,67 @@ export function updateMoveCount(count: number): void {
   if (el) el.textContent = String(count);
 }
 
-export function showWin(container: HTMLElement): void {
-  container.querySelector('#win-overlay')?.classList.add('show');
+export function showWin(container: HTMLElement, message: string): void {
+  const overlay = container.querySelector('#win-overlay')!;
+  const h2 = overlay.querySelector<HTMLElement>('#win-message');
+  if (h2) h2.textContent = message;
+  overlay.classList.add('show');
 }
 
 export function hideWin(container: HTMLElement): void {
   container.querySelector('#win-overlay')?.classList.remove('show');
+}
+
+const HEART_EMOJIS = ['❤️', '💕', '💗'];
+
+export function startHeartAnimation(container: HTMLElement): void {
+  const grid = container.querySelector<HTMLElement>('#grid')!;
+
+  // Remove any previous hearts.
+  const existingInterval = (grid as any)._heartInterval as number | undefined;
+  if (existingInterval !== undefined) { clearInterval(existingInterval); delete (grid as any)._heartInterval; }
+  grid.querySelector('#hearts-container')?.remove();
+
+  const hippoEl = grid.querySelector<HTMLElement>('[data-id="hippo"]');
+  const mamaEl = grid.querySelector<HTMLElement>('[data-id="mama"]');
+  if (!hippoEl || !mamaEl) return;
+
+  const hippoCX = parseFloat(hippoEl.style.left) + CELL_PX / 2;
+  const hippoCY = parseFloat(hippoEl.style.top) + CELL_PX / 2;
+  const mamaCX = parseFloat(mamaEl.style.left) + CELL_PX / 2;
+  const mamaCY = parseFloat(mamaEl.style.top) + CELL_PX / 2;
+
+  const heartsEl = document.createElement('div');
+  heartsEl.id = 'hearts-container';
+  heartsEl.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:50;overflow:visible;';
+  grid.appendChild(heartsEl);
+
+  function spawnHeart(): void {
+    const heart = document.createElement('div');
+    heart.className = 'floating-heart';
+    const t = Math.random();
+    const spread = CELL_PX * 0.9;
+    const x = hippoCX + (mamaCX - hippoCX) * t + (Math.random() - 0.5) * spread;
+    const y = hippoCY + (mamaCY - hippoCY) * t + (Math.random() - 0.5) * spread * 0.4;
+    const size = CELL_PX * (0.35 + Math.random() * 0.35);
+    const dur = 1.8 + Math.random() * 0.9;
+    heart.style.left = `${x - size / 2}px`;
+    heart.style.top = `${y - size / 2}px`;
+    heart.style.fontSize = `${size}px`;
+    heart.style.setProperty('--dur', `${dur}s`);
+    heart.textContent = HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)];
+    heartsEl.appendChild(heart);
+    heart.addEventListener('animationend', () => heart.remove());
+  }
+
+  // Initial burst then steady stream.
+  for (let i = 0; i < 4; i++) setTimeout(() => spawnHeart(), i * 130);
+  (grid as any)._heartInterval = window.setInterval(spawnHeart, 360);
+}
+
+export function stopHeartAnimation(container: HTMLElement): void {
+  const grid = container.querySelector<HTMLElement>('#grid')!;
+  const interval = (grid as any)._heartInterval as number | undefined;
+  if (interval !== undefined) { clearInterval(interval); delete (grid as any)._heartInterval; }
+  grid.querySelector('#hearts-container')?.remove();
 }
