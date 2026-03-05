@@ -52,7 +52,7 @@ function startGame(index: number): void {
       if (hasNext) {
         navigateTo(currentLevelIndex + 1);
       } else {
-        showWin(container, 'You finished the game! Ask your dad for more levels :)');
+        showWin(container, 'You finished the game!<br>Ask your dad for more levels :)');
       }
     });
   });

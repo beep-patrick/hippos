@@ -61,5 +61,12 @@ export function numbersPlugin(): Plugin {
       const json = execSync(`osascript -l JavaScript ${tmpPath}`).toString().trim();
       return `export default ${json}`;
     },
+    handleHotUpdate({ file, server }) {
+      if (!file.endsWith('.numbers')) return;
+      const mods = server.moduleGraph.getModulesByFile(file);
+      if (mods) mods.forEach(mod => server.moduleGraph.invalidateModule(mod));
+      server.ws.send({ type: 'full-reload' });
+      return [];
+    },
   };
 }

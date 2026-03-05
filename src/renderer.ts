@@ -189,7 +189,7 @@ export function updateMoveCount(count: number): void {
 export function showWin(container: HTMLElement, message: string): void {
   const overlay = container.querySelector('#win-overlay')!;
   const h2 = overlay.querySelector<HTMLElement>('#win-message');
-  if (h2) h2.textContent = message;
+  if (h2) h2.innerHTML = message;
   overlay.classList.add('show');
 }
 
