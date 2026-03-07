@@ -3,6 +3,7 @@ import { initState } from './gameState';
 import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin, startHeartAnimation, stopHeartAnimation } from './renderer';
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
+import hippoSvg from './hippo.svg?raw';
 
 import rawLevels from './levels/levels.generated.json';
 
@@ -14,9 +15,24 @@ if (levels.length === 0) throw new Error('No levels found in levels.generated.js
 
 const container = document.getElementById('game-container')!;
 const restartBtn = document.getElementById('restart-btn')!;
+const startScreen = document.getElementById('start-screen')!;
+const playBtn = document.getElementById('play-btn')!;
+document.getElementById('start-hippo')!.innerHTML = hippoSvg;;
 
 let currentLevelIndex = 0;
 let cleanupInput: (() => void) | null = null;
+
+function showStartScreen(): void {
+  startScreen.classList.add('show');
+  container.style.visibility = 'hidden';
+  document.getElementById('ui')!.style.visibility = 'hidden';
+}
+
+function hideStartScreen(): void {
+  startScreen.classList.remove('show');
+  container.style.visibility = '';
+  document.getElementById('ui')!.style.visibility = '';
+}
 
 function startGame(index: number): void {
   currentLevelIndex = index;
@@ -57,6 +73,11 @@ function startGame(index: number): void {
 // Base path of the app, e.g. '/hippos' on GitHub Pages and in local dev.
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
+function isStartUrl(): boolean {
+  const path = window.location.pathname.replace(basePath, '').replace(/^\//, '');
+  return path === '' || path === 'index.html';
+}
+
 function getLevelFromUrl(): number {
   const match = window.location.pathname.match(/\/(\d+)$/);
   if (match) {
@@ -67,19 +88,37 @@ function getLevelFromUrl(): number {
 }
 
 function navigateTo(index: number): void {
+  hideStartScreen();
   history.pushState({ levelIndex: index }, '', `${basePath}/${index + 1}`);
   startGame(index);
 }
 
+function navigateToStart(): void {
+  showStartScreen();
+  history.pushState({ start: true }, '', `${basePath}/`);
+}
+
 window.addEventListener('popstate', (e) => {
-  startGame(e.state?.levelIndex ?? getLevelFromUrl());
+  if (e.state?.start || isStartUrl()) {
+    showStartScreen();
+  } else {
+    hideStartScreen();
+    startGame(e.state?.levelIndex ?? getLevelFromUrl());
+  }
 });
+
+playBtn.addEventListener('click', () => navigateTo(0));
 
 restartBtn.addEventListener('click', () => {
   hideWin(container);
-  navigateTo(0);
+  navigateToStart();
 });
 
-const initialIndex = getLevelFromUrl();
-history.replaceState({ levelIndex: initialIndex }, '', `${basePath}/${initialIndex + 1}`);
-startGame(initialIndex);
+if (isStartUrl()) {
+  showStartScreen();
+  history.replaceState({ start: true }, '', `${basePath}/`);
+} else {
+  const initialIndex = getLevelFromUrl();
+  history.replaceState({ levelIndex: initialIndex }, '', `${basePath}/${initialIndex + 1}`);
+  startGame(initialIndex);
+}

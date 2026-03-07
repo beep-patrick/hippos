@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Hippo Puzzle</title>
+    <title>Elliott the Hippo</title>
     <style>
       *, *::before, *::after {
         box-sizing: border-box;
@@ -194,9 +194,75 @@
         60%  { transform: scale(1)   translateY(-55px); opacity: 0.85; }
         100% { transform: scale(0.5) translateY(-95px); opacity: 0; }
       }
+
+      #start-screen {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #4a7a30;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
+        z-index: 200;
+      }
+
+      #start-screen.show {
+        display: flex;
+      }
+
+      #start-screen h1 {
+        font-size: clamp(36px, 8vw, 64px);
+        font-weight: 900;
+        letter-spacing: -1px;
+        text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+        text-align: center;
+      }
+
+      #start-hippo {
+        width: min(40vw, 200px);
+        height: min(40vw, 200px);
+        filter: drop-shadow(0 6px 16px rgba(0,0,0,0.35));
+        animation: hippo-bob 2.4s ease-in-out infinite;
+        flex-shrink: 0;
+      }
+
+      #start-hippo svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      @keyframes hippo-bob {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-12px); }
+      }
+
+      #play-btn {
+        padding: 18px 56px;
+        font-size: 24px;
+        font-weight: 700;
+        border: none;
+        border-radius: 14px;
+        background: #f5c842;
+        color: #3a2a00;
+        cursor: pointer;
+        box-shadow: 0 4px 0 #b8912a, 0 6px 16px rgba(0,0,0,0.3);
+        transition: transform 0.08s, box-shadow 0.08s;
+        touch-action: manipulation;
+      }
+
+      #play-btn:active {
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #b8912a, 0 2px 8px rgba(0,0,0,0.25);
+      }
     </style>
   </head>
   <body>
+    <div id="start-screen">
+      <h1>Elliott<br>the Hippo</h1>
+      <div id="start-hippo"></div>
+      <button id="play-btn">Play</button>
+    </div>
     <div id="ui">
       <span id="level-label">Level 1</span>
       <span>Moves: <strong id="move-count">0</strong></span>
