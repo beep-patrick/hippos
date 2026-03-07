@@ -74,8 +74,8 @@ function startGame(index: number): void {
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 function isStartUrl(): boolean {
-  const path = window.location.pathname.replace(basePath, '').replace(/^\//, '');
-  return path === '' || path === 'index.html';
+  const p = window.location.pathname;
+  return p === basePath || p === basePath + '/';
 }
 
 function getLevelFromUrl(): number {
