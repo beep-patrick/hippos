@@ -147,13 +147,72 @@ function cloneState(state: GameState): GameState {
   };
 }
 
+/**
+ * After a piece move, find one representative cell per connected sub-region
+ * that the hippo could occupy. A piece move can split the hippo's old region
+ * into multiple disconnected parts; we return one cell per part so the BFS
+ * explores all of them.
+ */
+function findHippoStarts(
+  oldRegion: Set<string>,
+  state: GameState,
+): Array<{ row: number; col: number }> {
+  const blocked = new Set<string>();
+  const { mamaPos, mamaWidth = 1, mamaHeight = 1, boulders } = state.level;
+  for (let ri = 0; ri < mamaHeight; ri++)
+    for (let ci = 0; ci < mamaWidth; ci++)
+      blocked.add(`${mamaPos.row + ri},${mamaPos.col + ci}`);
+  for (const b of boulders ?? []) blocked.add(`${b.row},${b.col}`);
+  for (const log of state.logs)
+    for (let i = 0; i < log.length; i++)
+      blocked.add(log.orientation === 'vertical' ? `${log.row + i},${log.col}` : `${log.row},${log.col + i}`);
+  for (const obs of state.hippoObstacles)
+    for (let i = 0; i < 2; i++)
+      blocked.add(obs.orientation === 'vertical' ? `${obs.row + i},${obs.col}` : `${obs.row},${obs.col + i}`);
+
+  // Collect free cells still in the old region.
+  const free = new Set<string>();
+  for (const key of oldRegion) {
+    if (!blocked.has(key)) free.add(key);
+  }
+
+  // BFS within `free` to find connected components; return one rep per component.
+  const visited = new Set<string>();
+  const reps: Array<{ row: number; col: number }> = [];
+
+  for (const key of free) {
+    if (visited.has(key)) continue;
+    const comma = key.indexOf(',');
+    reps.push({ row: Number(key.slice(0, comma)), col: Number(key.slice(comma + 1)) });
+    const bfsQ = [key];
+    visited.add(key);
+    let bfsHead = 0;
+    while (bfsHead < bfsQ.length) {
+      const cell = bfsQ[bfsHead++];
+      const ci = cell.indexOf(',');
+      const r = Number(cell.slice(0, ci)), c = Number(cell.slice(ci + 1));
+      for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+        const nk = `${r + dr},${c + dc}`;
+        if (free.has(nk) && !visited.has(nk)) { visited.add(nk); bfsQ.push(nk); }
+      }
+    }
+  }
+
+  return reps;
+}
+
 /** Only piece moves — hippo moves always stay within the same connected region,
- *  so they never change the state key and are handled via anyWinCellInRegion. */
+ *  so they never change the state key and are handled via anyWinCellInRegion.
+ *
+ *  The hippo is excluded from collision checks: in the actual game the player
+ *  can always move the hippo out of a piece's path before sliding it. */
 function getPieceMoves(state: GameState): SolverMove[] {
+  // Shadow hippo position with an out-of-bounds cell so it doesn't limit slide ranges.
+  const s: GameState = { ...state, hippoPos: { row: -999, col: -999 } };
   const moves: SolverMove[] = [];
 
   for (const log of state.logs) {
-    const { min, max } = logSlideRange(state, log.id);
+    const { min, max } = logSlideRange(s, log.id);
     if (log.orientation === 'horizontal') {
       for (let col = min; col <= max; col++) {
         if (col !== log.col) moves.push({ type: 'log', id: log.id, newRow: log.row, newCol: col });
@@ -166,7 +225,7 @@ function getPieceMoves(state: GameState): SolverMove[] {
   }
 
   for (const obs of state.hippoObstacles) {
-    const { min, max } = hippoObstacleSlideRange(state, obs.id);
+    const { min, max } = hippoObstacleSlideRange(s, obs.id);
     if (obs.orientation === 'horizontal') {
       for (let col = min; col <= max; col++) {
         if (col !== obs.col) moves.push({ type: 'obstacle', id: obs.id, newRow: obs.row, newCol: col });
@@ -182,9 +241,16 @@ function getPieceMoves(state: GameState): SolverMove[] {
 }
 
 function applyPieceMove(state: GameState, move: SolverMove): boolean {
-  if (move.type === 'log') return moveLog(state, move.id, move.newRow, move.newCol);
-  if (move.type === 'obstacle') return moveHippoObstacle(state, move.id, move.newRow, move.newCol);
-  return false;
+  // Exclude hippo from collision so pieces can slide past its current cell
+  // (the hippo steps aside first in actual play).
+  const savedHippo = state.hippoPos;
+  state.hippoPos = { row: -999, col: -999 };
+  let ok: boolean;
+  if (move.type === 'log') ok = moveLog(state, move.id, move.newRow, move.newCol);
+  else if (move.type === 'obstacle') ok = moveHippoObstacle(state, move.id, move.newRow, move.newCol);
+  else ok = false;
+  state.hippoPos = savedHippo;
+  return ok;
 }
 
 const DEFAULT_MAX_STATES = 500_000;
@@ -192,13 +258,16 @@ const DEFAULT_MAX_STATES = 500_000;
 /**
  * BFS solver for a hippo puzzle level.
  *
- * Returns whether the level is solvable, the minimum number of log/obstacle
- * slides required, and the full action path (including hippo steps).
+ * State: (piece configuration, hippo's connected river region). All hippo
+ * positions within the same region are equivalent — the hippo can move freely
+ * between piece slides.
  *
- * Uses a connected-component state key: all hippo positions in the same free
- * river region are treated as equivalent, collapsing the search space.
- * Win is detected by checking whether any cell in the hippo's reachable region
- * satisfies the adjacency condition, rather than checking only the actual hippo cell.
+ * Win detection: checks whether any cell in the hippo's reachable region is
+ * adjacent to mama, rather than checking only the hippo's anchor cell.
+ *
+ * Pieces may slide past the hippo's current cell (the hippo steps aside first).
+ * If a piece move splits the hippo's region, one next-state is enqueued per
+ * resulting sub-region so all reachable configurations are explored.
  *
  * @param options.maxStates  Stop after exploring this many states (default 500,000).
  */
@@ -212,9 +281,9 @@ export function solveLevel(level: Level, options?: { maxStates?: number }): Solv
     return { solvable: true, moves: 0, path, statesExplored: 0 };
   }
 
-  // BFS queue entries: state + back-pointer for path reconstruction.
-  const queue: Array<{ state: GameState; parentIdx: number; move: SolverMove | null }> = [
-    { state: initial, parentIdx: -1, move: null },
+  // BFS queue: state + its reachable region + back-pointer for path reconstruction.
+  const queue: Array<{ state: GameState; reachable: Set<string>; parentIdx: number; move: SolverMove | null }> = [
+    { state: initial, reachable: initialReachable, parentIdx: -1, move: null },
   ];
   const visited = new Map<string, number>(); // stateKey → queue index
   visited.set(stateKey(initial, initialReachable), 0);
@@ -225,33 +294,41 @@ export function solveLevel(level: Level, options?: { maxStates?: number }): Solv
       return { solvable: false, statesExplored: visited.size };
     }
 
-    const { state } = queue[head];
+    const { state, reachable: oldReachable } = queue[head];
 
     for (const move of getPieceMoves(state)) {
       const next = cloneState(state);
       if (!applyPieceMove(next, move)) continue;
 
-      const reachable = hippoReachable(next.level, next.hippoPos, next.logs, next.hippoObstacles);
+      // A piece move may split the hippo's old region into disconnected parts.
+      // Enumerate one representative per sub-region and enqueue each separately.
+      const starts = findHippoStarts(oldReachable, next);
+      if (starts.length === 0) continue;
 
-      if (anyWinCellInRegion(next.level, reachable)) {
-        // Reconstruct piece-move path by walking back-pointers.
-        const path: SolverMove[] = [move];
-        let cur = head;
-        while (queue[cur].move !== null) {
-          path.unshift(queue[cur].move!);
-          cur = queue[cur].parentIdx;
-        }
-        // Append hippo steps to reach the win cell.
-        for (const step of hippoPathToWin(next.level, next.hippoPos, reachable)) {
-          path.push(step);
-        }
-        return { solvable: true, moves: next.moves, path, statesExplored: visited.size };
-      }
+      for (const start of starts) {
+        const candidate = cloneState(next);
+        candidate.hippoPos = start;
 
-      const key = stateKey(next, reachable);
-      if (!visited.has(key)) {
-        visited.set(key, queue.length);
-        queue.push({ state: next, parentIdx: head, move });
+        const reachable = hippoReachable(candidate.level, start, candidate.logs, candidate.hippoObstacles);
+
+        if (anyWinCellInRegion(candidate.level, reachable)) {
+          const path: SolverMove[] = [move];
+          let cur = head;
+          while (queue[cur].move !== null) {
+            path.unshift(queue[cur].move!);
+            cur = queue[cur].parentIdx;
+          }
+          for (const step of hippoPathToWin(candidate.level, start, reachable)) {
+            path.push(step);
+          }
+          return { solvable: true, moves: candidate.moves, path, statesExplored: visited.size };
+        }
+
+        const key = stateKey(candidate, reachable);
+        if (!visited.has(key)) {
+          visited.set(key, queue.length);
+          queue.push({ state: candidate, reachable, parentIdx: head, move });
+        }
       }
     }
 
