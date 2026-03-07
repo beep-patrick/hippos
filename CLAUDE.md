@@ -1,0 +1,73 @@
+# Hippo Puzzle Game
+
+Browser-based sliding puzzle game for tablets (iPad 10th gen primary target). Rush Hour / Unblock Me style. Baby hippo must reach mama hippo by sliding logs out of the way.
+
+## Tech Stack
+
+- Vite + TypeScript (no framework)
+- DOM rendering with CSS Grid + absolutely positioned piece divs
+- Pointer events for touch + mouse (tablet-first)
+
+## Key Files
+
+- `src/types.ts` — Log, Level, GameState interfaces
+- `src/gameState.ts` — initState, moveLog, moveHippo, logSlideRange, checkWin
+- `src/renderer.ts` — buildGrid, renderPieces, updatePiecePosition, showWin/hideWin
+- `src/input.ts` — attachInputHandlers (returns cleanup fn); uses AbortController
+- `src/main.ts` — entry point, wires everything together
+- `src/parseCsvLevel.ts` — CSV → Level parser
+- `src/levels/levels.numbers` — all levels in one Numbers spreadsheet; each sheet = one level
+- `src/levels/levels.generated.json` — compiled output from levels.numbers (don't edit directly)
+- `src/levels/LEVEL_DESIGN.md` — level design guide and patterns
+
+## Game Mechanics
+
+- Baby hippo moves up/down/left/right through river cells only
+- Logs slide along their axis (horizontal ↔, vertical ↕); can cross any terrain
+- Hippo obstacles (enemy hippos) slide like logs but are river-only
+- Win condition: hippo reaches adjacency (any of 8 surrounding cells) with mama hippo
+- Row 0 = top of grid (win direction); rows are 0-indexed
+
+## Level Format (CSV)
+
+Levels are sheets in `levels.numbers`, exported as CSV rows by the Vite plugin.
+
+```
+~      = river cell (hippo/obstacles can only move here)
+H      = baby hippo start position
+M      = mama hippo (1–2 adjacent cells; 2 → spans 2 cells)
+A-Z    = log (same letter = one log; straight contiguous line, 2–50 cells)
+a-z    = hippo obstacle (exactly 2 contiguous river cells)
+*      = boulder (immovable)
+(empty)= bank terrain
+```
+
+Parser auto-adds 1 bleed row at top and bottom (pieces can't enter bleed rows).
+
+## Grid Sizing (iPad 10th gen, 820×1114px usable)
+
+`cellPx = Math.min(820/cols, 1114/visibleRows)`
+
+Always use height-binding configs so bleed rows stay hidden:
+
+| cols | vis.rows | cell px |
+|------|----------|---------|
+| 10   | 14       | 79.6    |
+| 11   | 15       | 74.3    |
+| 12   | 16       | 69.6    |
+
+## Patterns / Conventions
+
+- `attachInputHandlers` returns a cleanup fn; call it before re-init on restart
+- Pieces are re-rendered fully on restart (`.piece` elements removed and recreated)
+- Static grid cells are built once per level load (not rebuilt on restart)
+- Logs drag smoothly (sub-cell visual), snap to grid on release
+- Hippo moves by swipe gesture: pointer down on hippo, pointer up with direction
+
+## Workflow: Adding / Editing Levels
+
+1. Edit `src/levels/levels.numbers` in Numbers (each sheet = one level)
+2. Run the `export-levels` skill to regenerate `levels.generated.json`
+3. Test in browser at the relevant level URL (`/1`, `/2`, etc.)
+
+See `src/levels/LEVEL_DESIGN.md` for level design principles and difficulty guidance.
