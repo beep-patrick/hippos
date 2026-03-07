@@ -9,7 +9,8 @@
     "noImplicitReturns": true,
     "skipLibCheck": true,
     "outDir": "dist",
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "resolveJsonModule": true
   },
   "include": ["src"]
 }

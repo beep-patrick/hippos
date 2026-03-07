@@ -4,17 +4,13 @@ import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin, startHeartA
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
 
-const rawNumbers = import.meta.glob('./levels/*.numbers', { eager: true }) as Record<string, { default: Array<{ name: string; csv: string }> }>;
+import rawLevels from './levels/levels.generated.json';
 
-const levels = Object.entries(rawNumbers)
-  .sort(([a], [b]) => a.localeCompare(b))
-  .flatMap(([, mod]) =>
-    mod.default.map(({ name, csv }) =>
-      parseCsvLevel(name.toLowerCase().replace(/\s+/g, '-'), name, csv)
-    )
-  );
+const levels = (rawLevels as Array<{ name: string; csv: string }>).map(({ name, csv }) =>
+  parseCsvLevel(name.toLowerCase().replace(/\s+/g, '-'), name, csv)
+);
 
-if (levels.length === 0) throw new Error('No .numbers levels found in src/levels/');
+if (levels.length === 0) throw new Error('No levels found in levels.generated.json');
 
 const container = document.getElementById('game-container')!;
 const restartBtn = document.getElementById('restart-btn')!;

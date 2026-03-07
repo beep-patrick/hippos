@@ -150,5 +150,5 @@ export function parseLevel(id: string, label: string, ascii: string, terrainStr?
     }
   }
 
-  return { id, label, rows, cols, logs, hippoStart, mamaPos, riverCells };
+  return { id, label, rows, cols, logs, hippoObstacles: [], hippoStart, mamaPos, riverCells, boulders: [] };
 }

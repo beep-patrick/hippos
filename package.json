@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "export-levels": "node scripts/export-levels.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
