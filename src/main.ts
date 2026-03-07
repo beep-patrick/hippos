@@ -54,6 +54,9 @@ function startGame(index: number): void {
   });
 }
 
+// Base path of the app, e.g. '/hippos' on GitHub Pages and in local dev.
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 function getLevelFromUrl(): number {
   const match = window.location.pathname.match(/\/(\d+)$/);
   if (match) {
@@ -64,7 +67,7 @@ function getLevelFromUrl(): number {
 }
 
 function navigateTo(index: number): void {
-  history.pushState({ levelIndex: index }, '', `/${index + 1}`);
+  history.pushState({ levelIndex: index }, '', `${basePath}/${index + 1}`);
   startGame(index);
 }
 
@@ -78,5 +81,5 @@ restartBtn.addEventListener('click', () => {
 });
 
 const initialIndex = getLevelFromUrl();
-history.replaceState({ levelIndex: initialIndex }, '', `/${initialIndex + 1}`);
+history.replaceState({ levelIndex: initialIndex }, '', `${basePath}/${initialIndex + 1}`);
 startGame(initialIndex);
