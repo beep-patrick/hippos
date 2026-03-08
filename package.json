@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "export-levels": "node scripts/export-levels.mjs",
-    "check-levels": "tsx scripts/check-levels.ts",
+    "test-levels": "tsx scripts/verify-solver.ts",
     "preview": "vite preview"
   },
   "devDependencies": {
