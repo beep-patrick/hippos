@@ -17,8 +17,9 @@ Browser-based sliding puzzle game for tablets (iPad 10th gen primary target). Ru
 - `src/main.ts` — entry point, wires everything together
 - `src/parseCsvLevel.ts` — CSV → Level parser
 - `src/levels/*.csv` — level CSV files (one per level, the native format)
-- `src/levels/levels.numbers` — Numbers spreadsheet source; exported to CSV files
-- `src/levels/LEVEL_DESIGN.md` — level design guide and patterns
+- `docs/levels.numbers` — Numbers spreadsheet source; exported to CSV files
+- `docs/LEVEL_DESIGN.md` — level design guide and patterns
+- `docs/templates/` — Rush Hour conversion templates
 - `src/solver.ts` — BFS solver (optimal piece-slide count, full transcript)
 - `scripts/test-level.ts` — parse + visualize + solve + verify a level
 - `scripts/visualize-level.ts` — ASCII grid renderer
@@ -76,8 +77,8 @@ Always use height-binding configs so bleed rows stay hidden:
 3. Levels load automatically in the game — sorted numerically by filename
 
 ### From Numbers spreadsheet
-1. Edit `src/levels/levels.numbers` in Numbers (each sheet = one level)
+1. Edit `docs/levels.numbers` in Numbers (each sheet = one level)
 2. Run the `export-levels` skill to export sheets as individual CSV files
 3. Test in browser at the relevant level URL (`/1`, `/2`, etc.)
 
-See `src/levels/LEVEL_DESIGN.md` for level design principles and difficulty guidance.
+See `docs/LEVEL_DESIGN.md` for level design principles and difficulty guidance.

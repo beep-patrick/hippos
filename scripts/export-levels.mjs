@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const levelsDir = resolve(__dirname, '../src/levels');
+const docsDir = resolve(__dirname, '../docs');
 
 const JXA_TEMPLATE = `
 function run() {
@@ -47,13 +48,13 @@ function run() {
 }
 `;
 
-const numbersFiles = readdirSync(levelsDir)
+const numbersFiles = readdirSync(docsDir)
   .filter(f => f.endsWith('.numbers'))
   .sort()
-  .map(f => resolve(levelsDir, f));
+  .map(f => resolve(docsDir, f));
 
 if (numbersFiles.length === 0) {
-  console.error('No .numbers files found in src/levels/');
+  console.error('No .numbers files found in docs/');
   process.exit(1);
 }
 
