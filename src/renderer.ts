@@ -2,6 +2,7 @@ import type { GameState, Level } from './types';
 import HIPPO_SVG from './hippo.svg?raw';
 import ADULT_HIPPO_SVG from './adultHippo.svg?raw';
 import MAMA_HIPPO_SVG from './mamaHippo.svg?raw';
+import BOULDER_SVG from './boulder.svg?raw';
 
 let CELL_PX = 56; // computed in buildGrid from viewport; fallback default
 
@@ -26,6 +27,8 @@ export function cellSize(): number {
 // visibleRows: the rows that should fit on screen (excludes bleed rows).
 export function buildGrid(container: HTMLElement, rows: number, cols: number, riverCells?: Set<string>, visibleRows?: number): void {
   CELL_PX = computeCellPx(visibleRows ?? rows, cols);
+  // Log border scales with cell size to match hippo SVG stroke-width 3 on a 100-unit viewBox.
+  document.documentElement.style.setProperty('--piece-border', `${CELL_PX * 3 / 100}px`);
   const grid = container.querySelector<HTMLElement>('#grid')!;
   grid.style.width = `${cols * CELL_PX}px`;
   grid.style.height = `${rows * CELL_PX}px`;
@@ -130,6 +133,7 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   for (const boulder of state.level.boulders ?? []) {
     const el = document.createElement('div');
     el.className = 'piece boulder';
+    el.innerHTML = BOULDER_SVG;
     el.style.left = `${boulder.col * CELL_PX}px`;
     el.style.top = `${boulder.row * CELL_PX}px`;
     el.style.width = `${CELL_PX}px`;

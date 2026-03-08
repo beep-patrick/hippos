@@ -112,7 +112,7 @@
         content: '';
         position: absolute;
         background: #8b5e3c;
-        border: 1px solid #6e4a2e;
+        border: var(--piece-border) solid #6e4a2e;
         border-radius: 4px;
       }
 
@@ -144,9 +144,9 @@
       }
 
       .piece.boulder {
-        background: radial-gradient(circle at 35% 35%, #999, #555 60%, #333);
-        border: 2px solid #444;
-        border-radius: 30%;
+        background: transparent;
+        border: none;
+        border-radius: 0;
         pointer-events: none;
       }
 
