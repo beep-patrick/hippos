@@ -1,5 +1,5 @@
 /**
- * All-in-one level design tool: parse → visualize → solve → verify.
+ * All-in-one level design tool: parse -> visualize -> solve -> verify.
  *
  * Usage:
  *   npx tsx scripts/test-level.ts path/to/level.csv        # test a CSV file
@@ -12,8 +12,7 @@ import { initState, moveLog, moveHippo, moveHippoObstacle, checkWin } from '../s
 import { solveLevel, type SolverMove } from '../src/solver.js';
 import type { Level } from '../src/types.js';
 import { renderAscii, levelInfo } from './visualize-level.js';
-import { readFileSync, existsSync } from 'fs';
-import levelsJson from '../src/levels/levels.generated.json' assert { type: 'json' };
+import { loadAllLevels, findLevel } from './load-levels.js';
 
 // ---------------------------------------------------------------------------
 // Verification: replay transcript through game engine
@@ -49,12 +48,9 @@ function verify(level: Level, path: SolverMove[]): { ok: boolean; error?: string
 // ---------------------------------------------------------------------------
 
 function assessDifficulty(moveCount: number, path: SolverMove[]): string {
-  // Count distinct pieces that move
   const movedPieces = new Set(path.filter(m => m.type !== 'hippo').map(m => (m as any).id));
   const hippoSteps = path.filter(m => m.type === 'hippo').length;
-  const pieceSlides = path.length - hippoSteps;
 
-  // Check if hippo moves are interleaved with piece moves (more interesting)
   let interleaveCount = 0;
   let lastType: 'hippo' | 'piece' = 'hippo';
   for (const m of path) {
@@ -99,7 +95,6 @@ function testLevel(name: string, level: Level, maxStates: number) {
   console.log(renderAscii(level));
   console.log();
 
-  // Solve
   console.log('Solving...');
   const t0 = Date.now();
   const result = solveLevel(level, { maxStates });
@@ -118,11 +113,9 @@ function testLevel(name: string, level: Level, maxStates: number) {
   console.log(`\nSOLUTION: ${result.moves} piece slides, ${result.path!.length} total steps`);
   console.log();
 
-  // Difficulty assessment
   console.log(assessDifficulty(result.moves!, result.path!));
   console.log();
 
-  // Transcript
   console.log('Transcript:');
   for (const move of result.path!) {
     if (move.type === 'hippo') {
@@ -133,7 +126,6 @@ function testLevel(name: string, level: Level, maxStates: number) {
     }
   }
 
-  // Verify
   console.log();
   const v = verify(level, result.path!);
   if (v.ok) {
@@ -154,26 +146,16 @@ if (!arg) {
 }
 
 const maxStates = Number(process.argv[3] ?? 500_000);
-const levels = levelsJson as Array<{ name: string; csv: string }>;
 
 if (arg === 'all') {
-  for (const entry of levels) {
+  for (const entry of loadAllLevels()) {
     const level = parseCsvLevel(entry.name, entry.name, entry.csv);
     testLevel(entry.name, level, maxStates);
   }
-} else if (existsSync(arg)) {
-  const csv = readFileSync(arg, 'utf-8');
-  try {
-    const level = parseCsvLevel('custom', 'Custom', csv);
-    testLevel('Custom (from file)', level, maxStates);
-  } catch (e: any) {
-    console.error(`Parse error: ${e.message}`);
-    process.exit(1);
-  }
 } else {
-  const entry = levels.find(l => l.name === arg);
+  const entry = findLevel(arg);
   if (!entry) {
-    console.error(`Level "${arg}" not found. Available: ${levels.map(l => l.name).join(', ')}`);
+    console.error(`Level "${arg}" not found.`);
     process.exit(1);
   }
   const level = parseCsvLevel(entry.name, entry.name, entry.csv);

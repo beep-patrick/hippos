@@ -1,5 +1,5 @@
 /**
- * ASCII-render a level from levels.generated.json or a raw CSV file.
+ * ASCII-render a level from CSV files.
  *
  * Usage:
  *   npx tsx scripts/visualize-level.ts 3              # level by name
@@ -8,8 +8,7 @@
  */
 import { parseCsvLevel } from '../src/parseCsvLevel.js';
 import type { Level } from '../src/types.js';
-import { readFileSync, existsSync } from 'fs';
-import levelsJson from '../src/levels/levels.generated.json' assert { type: 'json' };
+import { loadAllLevels, findLevel } from './load-levels.js';
 
 // ---------------------------------------------------------------------------
 // ASCII renderer
@@ -19,33 +18,29 @@ export function renderAscii(level: Level): string {
   const { rows, cols, logs, hippoObstacles, hippoStart, mamaPos, boulders, bleedTop = 0, bleedBottom = 0 } = level;
   const mw = level.mamaWidth ?? 1, mh = level.mamaHeight ?? 1;
 
-  // Build grid: each cell gets a 2-char label
   const grid: string[][] = [];
   for (let r = 0; r < rows; r++) {
     const row: string[] = [];
     for (let c = 0; c < cols; c++) {
       if (r < bleedTop || r >= rows - bleedBottom) {
-        row.push('##');  // bleed row
+        row.push('##');
       } else if (level.riverCells && !level.riverCells.has(`${r},${c}`)) {
-        row.push('  ');  // bank (empty)
+        row.push('  ');
       } else {
-        row.push('~~');  // river
+        row.push('~~');
       }
     }
     grid.push(row);
   }
 
-  // Boulders
   for (const b of boulders ?? []) {
     grid[b.row][b.col] = '**';
   }
 
-  // Mama
   for (let ri = 0; ri < mh; ri++)
     for (let ci = 0; ci < mw; ci++)
       grid[mamaPos.row + ri][mamaPos.col + ci] = 'MM';
 
-  // Logs
   for (const log of logs) {
     const label = log.id.replace('log-', '');
     for (let i = 0; i < log.length; i++) {
@@ -56,7 +51,6 @@ export function renderAscii(level: Level): string {
     }
   }
 
-  // Hippo obstacles
   for (const obs of hippoObstacles) {
     const label = obs.id.replace('obstacle-', '');
     for (let i = 0; i < 2; i++) {
@@ -66,10 +60,8 @@ export function renderAscii(level: Level): string {
     }
   }
 
-  // Baby hippo
   grid[hippoStart.row][hippoStart.col] = 'HH';
 
-  // Render with row numbers
   const lines: string[] = [];
   const colHeader = '    ' + Array.from({ length: cols }, (_, i) => String(i).padStart(2)).join(' ');
   lines.push(colHeader);
@@ -77,8 +69,6 @@ export function renderAscii(level: Level): string {
 
   for (let r = 0; r < rows; r++) {
     const rowLabel = String(r).padStart(2);
-    const isBleed = r < bleedTop || r >= rows - bleedBottom;
-    const prefix = isBleed ? '  ' : '  ';
     lines.push(`${rowLabel} |${grid[r].join(' ')}|`);
   }
 
@@ -99,7 +89,7 @@ export function levelInfo(level: Level): string {
   const hObs = level.hippoObstacles.filter(o => o.orientation === 'horizontal').length;
   const vObs = level.hippoObstacles.filter(o => o.orientation === 'vertical').length;
 
-  const parts = [
+  return [
     `${visRows} rows x ${level.cols} cols (${level.rows} total with bleed)`,
     `${level.logs.length} logs (${hLogs}H ${vLogs}V)`,
     `${level.hippoObstacles.length} obstacle hippos (${hObs}H ${vObs}V)`,
@@ -107,8 +97,7 @@ export function levelInfo(level: Level): string {
     `${totalRiver} river cells`,
     `Hippo start: (${level.hippoStart.row},${level.hippoStart.col})`,
     `Mama: (${level.mamaPos.row},${level.mamaPos.col}) ${level.mamaWidth ?? 1}x${level.mamaHeight ?? 1}`,
-  ];
-  return parts.join('\n');
+  ].join('\n');
 }
 
 // ---------------------------------------------------------------------------
@@ -128,22 +117,14 @@ if (!arg) {
   process.exit(1);
 }
 
-const levels = levelsJson as Array<{ name: string; csv: string }>;
-
 if (arg === 'all') {
-  for (const entry of levels) {
+  for (const entry of loadAllLevels()) {
     const level = parseCsvLevel(entry.name, entry.name, entry.csv);
     showLevel(entry.name, level);
   }
-} else if (existsSync(arg)) {
-  // Raw CSV file
-  const csv = readFileSync(arg, 'utf-8');
-  const level = parseCsvLevel('custom', 'Custom', csv);
-  showLevel('Custom', level);
 } else {
-  // Level name from generated JSON
-  const entry = levels.find(l => l.name === arg);
-  if (!entry) { console.error(`Level "${arg}" not found. Available: ${levels.map(l => l.name).join(', ')}`); process.exit(1); }
+  const entry = findLevel(arg);
+  if (!entry) { console.error(`Level "${arg}" not found`); process.exit(1); }
   const level = parseCsvLevel(entry.name, entry.name, entry.csv);
   showLevel(entry.name, level);
 }

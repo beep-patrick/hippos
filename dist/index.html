@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Hippo Puzzle</title>
+    <title>Elliott the Hippo</title>
     <style>
       *, *::before, *::after {
         box-sizing: border-box;
@@ -11,203 +11,105 @@
         padding: 0;
       }
 
-      html {
-        height: 100%;
-        height: -webkit-fill-available;
-      }
-
-      body {
+      html, body {
         width: 100%;
         height: 100%;
-        min-height: -webkit-fill-available;
+        height: -webkit-fill-available;
         overflow: hidden;
         overscroll-behavior: none;
-        background: #4a7a30;
-        position: relative;
+        background: #3a7bbf;
         font-family: system-ui, sans-serif;
         color: #fff;
         touch-action: none;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       }
 
-      #ui {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        gap: 24px;
-        align-items: center;
-        padding: 8px 16px;
-        font-size: 18px;
-        z-index: 10;
+      h1 {
+        font-size: clamp(36px, 8vw, 64px);
+        font-weight: 900;
+        letter-spacing: -1px;
+        text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+        text-align: center;
       }
 
-      #ui span {
-        background: rgba(255,255,255,0.1);
-        padding: 4px 12px;
-        border-radius: 8px;
+      #start-hippo {
+        width: min(40vw, 200px);
+        height: min(40vw, 200px);
+        filter: drop-shadow(0 6px 16px rgba(0,0,0,0.35));
+        animation: hippo-bob 2.4s ease-in-out infinite;
+        flex-shrink: 0;
       }
 
-      #game-container {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      #start-hippo svg {
+        width: 100%;
+        height: 100%;
       }
 
-      #grid {
-        display: grid;
-        position: relative;
+      @keyframes hippo-bob {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-12px); }
       }
 
-      .cell {
-        border: 1px solid rgba(255,255,255,0.06);
-      }
-
-      .cell:nth-child(even) {
-        background: rgba(255,255,255,0.02);
-      }
-
-      .cell.river {
-        background: #3a7bbf;
-        border-color: rgba(100,180,255,0.15);
-      }
-
-
-      .cell.bank {
-        background: #4a7a30;
-        border-color: rgba(80,120,40,0.3);
-      }
-
-      .piece {
-        position: absolute;
-        border-radius: 6px;
-        touch-action: none;
-        transition: box-shadow 0.1s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        color: rgba(0,0,0,0.5);
-      }
-
-      .piece:active {
-        cursor: grabbing;
-        z-index: 10 !important;
-      }
-
-      .piece.log-horizontal,
-      .piece.log-vertical {
-        background: transparent;
+      #play-btn {
+        display: block;
+        padding: 18px 56px;
+        font-size: 24px;
+        font-weight: 700;
         border: none;
-      }
-
-      .piece.log-horizontal::before,
-      .piece.log-vertical::before {
-        content: '';
-        position: absolute;
-        background: #8b5e3c;
-        border: 1px solid #6e4a2e;
-        border-radius: 4px;
-      }
-
-      .piece.log-horizontal::before {
-        left: 0; right: 0;
-        top: 20%; bottom: 20%;
-      }
-
-      .piece.log-vertical::before {
-        top: 0; bottom: 0;
-        left: 20%; right: 20%;
-      }
-
-      .piece.hippo {
-        z-index: 5;
-        color: rgba(0,0,0,1);
-      }
-
-      .piece.mama {
-        z-index: 4;
-        pointer-events: none;
-      }
-
-      .piece.hippo-obstacle-horizontal,
-      .piece.hippo-obstacle-vertical {
-        background: transparent;
-        border: none;
-        border-radius: 0;
-      }
-
-      .piece.boulder {
-        background: radial-gradient(circle at 35% 35%, #999, #555 60%, #333);
-        border: 2px solid #444;
-        border-radius: 30%;
-        pointer-events: none;
-      }
-
-      #win-overlay {
-        display: none;
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0.7);
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 16px;
-        z-index: 100;
-      }
-
-      #win-overlay.show {
-        display: flex;
-      }
-
-      #win-overlay h2 {
-        font-size: 36px;
-      }
-
-      #win-overlay button {
-        padding: 10px 28px;
-        font-size: 18px;
-        border: none;
-        border-radius: 8px;
-        background: #4a90d9;
-        color: white;
+        border-radius: 14px;
+        background: #f5c842;
+        color: #3a2a00;
         cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 4px 0 #b8912a, 0 6px 16px rgba(0,0,0,0.3);
+        transition: transform 0.08s, box-shadow 0.08s;
+        touch-action: manipulation;
       }
 
-      .floating-heart {
-        position: absolute;
-        pointer-events: none;
-        line-height: 1;
-        user-select: none;
-        animation: heart-float var(--dur, 2s) ease-out forwards;
-      }
-
-      @keyframes heart-float {
-        0%   { transform: scale(0.2) translateY(0);    opacity: 0; }
-        20%  { transform: scale(1.3) translateY(-8px); opacity: 1; }
-        60%  { transform: scale(1)   translateY(-55px); opacity: 0.85; }
-        100% { transform: scale(0.5) translateY(-95px); opacity: 0; }
+      #play-btn:active {
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #b8912a, 0 2px 8px rgba(0,0,0,0.25);
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-DVs7L4ld.js"></script>
   </head>
   <body>
-    <div id="ui">
-      <span id="level-label">Level 1</span>
-      <span>Moves: <strong id="move-count">0</strong></span>
+    <h1>Elliott the Hippo</h1>
+    <div id="start-hippo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 2.5 100 102" style="display:block;width:100%;height:100%">
+        <defs>
+          <radialGradient id="blush">
+            <stop offset="0%"   stop-color="#FF9EB5" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#FF9EB5" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect x="44" y="91" width="8" height="12" rx="4" ry="4" fill="#6D91C8" stroke="#4A6FA5" stroke-width="3" />
+        <rect x="16" y="36" width="68" height="61" rx="16" ry="16" fill="#6D91C8" stroke="#4A6FA5" stroke-width="3" />
+        <ellipse cx="28" cy="42" rx="7" ry="9" transform="rotate(15,28,42)" fill="#7B9FD4" stroke="#4A6FA5" stroke-width="3" />
+        <ellipse cx="72" cy="42" rx="7" ry="9" transform="rotate(-15,72,42)" fill="#7B9FD4" stroke="#4A6FA5" stroke-width="3" />
+        <rect x="26" y="4" width="48" height="38" rx="10" ry="10" fill="#7B9FD4" stroke="#4A6FA5" stroke-width="3" />
+        <ellipse cx="28" cy="42" rx="5.5" ry="7.5" transform="rotate(15,28,42)" fill="#7B9FD4" />
+        <ellipse cx="72" cy="42" rx="5.5" ry="7.5" transform="rotate(-15,72,42)" fill="#7B9FD4" />
+        <ellipse cx="28" cy="42" rx="3.5" ry="5" transform="rotate(15,28,42)" fill="#9BB8D8" />
+        <ellipse cx="72" cy="42" rx="3.5" ry="5" transform="rotate(-15,72,42)" fill="#9BB8D8" />
+        <ellipse cx="34" cy="22" rx="11" ry="11" fill="url(#blush)" />
+        <ellipse cx="66" cy="22" rx="11" ry="11" fill="url(#blush)" />
+        <ellipse cx="40" cy="14" rx="5" ry="3.5" fill="#5A7EB5" />
+        <ellipse cx="60" cy="14" rx="5" ry="3.5" fill="#5A7EB5" />
+        <path d="M 33,27 A 7,7 0 0,0 47,27" fill="none" stroke="#3A5888" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M 53,27 A 7,7 0 0,0 67,27" fill="none" stroke="#3A5888" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
     </div>
-    <div id="game-container">
-      <div id="grid"></div>
-      <div id="win-overlay">
-        <h2 id="win-message"></h2>
-        <button id="restart-btn">Play Again</button>
-      </div>
-    </div>
+    <a id="play-btn" href="./game.html">Start</a>
   </body>
 </html>

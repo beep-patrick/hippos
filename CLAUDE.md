@@ -16,9 +16,13 @@ Browser-based sliding puzzle game for tablets (iPad 10th gen primary target). Ru
 - `src/input.ts` — attachInputHandlers (returns cleanup fn); uses AbortController
 - `src/main.ts` — entry point, wires everything together
 - `src/parseCsvLevel.ts` — CSV → Level parser
-- `src/levels/levels.numbers` — all levels in one Numbers spreadsheet; each sheet = one level
-- `src/levels/levels.generated.json` — compiled output from levels.numbers (don't edit directly)
+- `src/levels/*.csv` — level CSV files (one per level, the native format)
+- `src/levels/levels.numbers` — Numbers spreadsheet source; exported to CSV files
 - `src/levels/LEVEL_DESIGN.md` — level design guide and patterns
+- `src/solver.ts` — BFS solver (optimal piece-slide count, full transcript)
+- `scripts/test-level.ts` — parse + visualize + solve + verify a level
+- `scripts/visualize-level.ts` — ASCII grid renderer
+- `scripts/load-levels.ts` — shared helper to scan CSV level files
 
 ## Game Mechanics
 
@@ -30,7 +34,7 @@ Browser-based sliding puzzle game for tablets (iPad 10th gen primary target). Ru
 
 ## Level Format (CSV)
 
-Levels are sheets in `levels.numbers`, exported as CSV rows by the Vite plugin.
+Each level is a `.csv` file in `src/levels/`. Levels can also be authored in `levels.numbers` and exported to CSV.
 
 ```
 ~      = river cell (hippo/obstacles can only move here)
@@ -66,8 +70,14 @@ Always use height-binding configs so bleed rows stay hidden:
 
 ## Workflow: Adding / Editing Levels
 
+### From CSV (preferred)
+1. Create/edit a `.csv` file in `src/levels/` (e.g. `12.csv`)
+2. Test with `npx tsx scripts/test-level.ts 12` (or pass a file path)
+3. Levels load automatically in the game — sorted numerically by filename
+
+### From Numbers spreadsheet
 1. Edit `src/levels/levels.numbers` in Numbers (each sheet = one level)
-2. Run the `export-levels` skill to regenerate `levels.generated.json`
+2. Run the `export-levels` skill to export sheets as individual CSV files
 3. Test in browser at the relevant level URL (`/1`, `/2`, etc.)
 
 See `src/levels/LEVEL_DESIGN.md` for level design principles and difficulty guidance.

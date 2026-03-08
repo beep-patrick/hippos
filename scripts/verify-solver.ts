@@ -1,12 +1,12 @@
 /**
- * Verify solver2 solutions by replaying transcripts step-by-step on the game engine.
+ * Verify solver solutions by replaying transcripts step-by-step on the game engine.
  */
 import { parseCsvLevel } from '../src/parseCsvLevel.js';
 import { initState, moveLog, moveHippo, moveHippoObstacle, checkWin } from '../src/gameState.js';
-import { solveLevel, type SolverMove } from '../src/solver.js';
-import levelsJson from '../src/levels/levels.generated.json' assert { type: 'json' };
+import { solveLevel } from '../src/solver.js';
+import { loadAllLevels } from './load-levels.js';
 
-const levels = levelsJson as Array<{ name: string; csv: string }>;
+const levels = loadAllLevels();
 let allOk = true;
 
 for (const entry of levels) {
@@ -19,7 +19,6 @@ for (const entry of levels) {
     continue;
   }
 
-  // Replay transcript on the game engine
   const state = initState(level);
   let ok = true;
   let stepIdx = 0;
@@ -27,24 +26,20 @@ for (const entry of levels) {
   for (const move of result.path!) {
     stepIdx++;
     if (move.type === 'hippo') {
-      const success = moveHippo(state, move.dr, move.dc);
-      if (!success) {
-        console.log(`Level ${entry.name}: FAIL at step ${stepIdx} - hippo move (${move.dr},${move.dc}) rejected by game engine`);
-        console.log(`  Hippo at (${state.hippoPos.row},${state.hippoPos.col})`);
+      if (!moveHippo(state, move.dr, move.dc)) {
+        console.log(`Level ${entry.name}: FAIL at step ${stepIdx} - hippo move rejected`);
         ok = false;
         break;
       }
     } else if (move.type === 'log') {
-      const success = moveLog(state, move.id, move.newRow, move.newCol);
-      if (!success) {
-        console.log(`Level ${entry.name}: FAIL at step ${stepIdx} - log ${move.id} move to (${move.newRow},${move.newCol}) rejected`);
+      if (!moveLog(state, move.id, move.newRow, move.newCol)) {
+        console.log(`Level ${entry.name}: FAIL at step ${stepIdx} - log ${move.id} rejected`);
         ok = false;
         break;
       }
     } else {
-      const success = moveHippoObstacle(state, move.id, move.newRow, move.newCol);
-      if (!success) {
-        console.log(`Level ${entry.name}: FAIL at step ${stepIdx} - obstacle ${move.id} move to (${move.newRow},${move.newCol}) rejected`);
+      if (!moveHippoObstacle(state, move.id, move.newRow, move.newCol)) {
+        console.log(`Level ${entry.name}: FAIL at step ${stepIdx} - obstacle ${move.id} rejected`);
         ok = false;
         break;
       }
@@ -56,8 +51,7 @@ for (const entry of levels) {
     if (won) {
       console.log(`Level ${entry.name}: OK (${result.moves} slides, ${result.path!.length} total steps)`);
     } else {
-      console.log(`Level ${entry.name}: FAIL - transcript completed but win condition not met`);
-      console.log(`  Hippo at (${state.hippoPos.row},${state.hippoPos.col}), mama at (${level.mamaPos.row},${level.mamaPos.col})`);
+      console.log(`Level ${entry.name}: FAIL - win condition not met`);
       ok = false;
     }
   }

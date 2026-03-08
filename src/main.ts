@@ -4,13 +4,28 @@ import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin, startHeartA
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
 
-import rawLevels from './levels/levels.generated.json';
+// Load all CSV level files from src/levels/. Vite resolves these at build time.
+const csvModules = import.meta.glob('./levels/*.csv', { eager: true, query: '?raw', import: 'default' });
 
-const levels = (rawLevels as Array<{ name: string; csv: string }>).map(({ name, csv }) =>
+// Sort by numeric name (1.csv, 2.csv, ..., 11.csv, draft-level-12.csv, ...)
+const levelEntries = Object.entries(csvModules)
+  .map(([path, csv]) => {
+    const filename = path.split('/').pop()!.replace('.csv', '');
+    return { name: filename, csv: csv as string };
+  })
+  .sort((a, b) => {
+    const na = parseInt(a.name, 10), nb = parseInt(b.name, 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    if (!isNaN(na)) return -1;
+    if (!isNaN(nb)) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+const levels = levelEntries.map(({ name, csv }) =>
   parseCsvLevel(name.toLowerCase().replace(/\s+/g, '-'), name, csv)
 );
 
-if (levels.length === 0) throw new Error('No levels found in levels.generated.json');
+if (levels.length === 0) throw new Error('No level CSV files found in src/levels/');
 
 const container = document.getElementById('game-container')!;
 const restartBtn = document.getElementById('restart-btn')!;

@@ -1,6 +1,6 @@
 import { parseCsvLevel } from '../src/parseCsvLevel.js';
 import { solveLevel } from '../src/solver.js';
-import levelsJson from '../src/levels/levels.generated.json' assert { type: 'json' };
+import { loadAllLevels, findLevel } from './load-levels.js';
 
 const levelName = process.argv[2];
 const maxStates = Number(process.argv[3] ?? 500_000);
@@ -32,13 +32,12 @@ function solve(name: string, csv: string) {
   }
 }
 
-const levels = levelsJson as Array<{ name: string; csv: string }>;
-
 if (levelName && levelName !== 'all') {
-  const entry = levels.find(l => l.name === levelName);
-  if (!entry) { console.error(`Level ${levelName} not found`); process.exit(1); }
+  const entry = findLevel(levelName);
+  if (!entry) { console.error(`Level "${levelName}" not found`); process.exit(1); }
   solve(entry.name, entry.csv);
 } else {
+  const levels = loadAllLevels();
   console.log(`Solving all ${levels.length} levels...`);
   for (const entry of levels) {
     solve(entry.name, entry.csv);

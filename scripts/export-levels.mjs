@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Extracts level data from src/levels/*.numbers files using osascript (macOS + Numbers.app required).
- * Writes the result to src/levels/levels.generated.json.
+ * Writes each sheet as an individual CSV file: src/levels/{name}.csv
  *
- * Run this locally whenever you update the .numbers file, then commit the generated JSON.
+ * Run this locally whenever you update the .numbers file, then commit the CSV files.
  *   npm run export-levels
  */
 
@@ -14,7 +14,6 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const levelsDir = resolve(__dirname, '../src/levels');
-const outPath = resolve(levelsDir, 'levels.generated.json');
 
 const JXA_TEMPLATE = `
 function run() {
@@ -58,7 +57,7 @@ if (numbersFiles.length === 0) {
   process.exit(1);
 }
 
-const allSheets = [];
+let totalWritten = 0;
 for (const filePath of numbersFiles) {
   console.log(`Processing: ${filePath}`);
   const script = JXA_TEMPLATE.replace('__FILE_PATH__', JSON.stringify(filePath));
@@ -66,8 +65,13 @@ for (const filePath of numbersFiles) {
   writeFileSync(tmpPath, script);
   const json = execSync(`osascript -l JavaScript ${tmpPath}`).toString().trim();
   const sheets = JSON.parse(json);
-  allSheets.push(...sheets);
+
+  for (const { name, csv } of sheets) {
+    const csvPath = resolve(levelsDir, `${name}.csv`);
+    writeFileSync(csvPath, csv + '\n');
+    console.log(`  Written: ${name}.csv`);
+    totalWritten++;
+  }
 }
 
-writeFileSync(outPath, JSON.stringify(allSheets, null, 2));
-console.log(`Written ${allSheets.length} levels to ${outPath}`);
+console.log(`\nExported ${totalWritten} levels as CSV files to src/levels/`);
