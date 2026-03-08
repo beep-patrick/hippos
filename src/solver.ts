@@ -148,15 +148,55 @@ function cloneState(state: GameState): GameState {
 }
 
 /**
+ * Compute the set of all cells a piece sweeps through during a slide.
+ * The hippo must not be in any of these cells when the slide happens.
+ */
+function computeSweep(state: GameState, move: SolverMove): Set<string> {
+  const sweep = new Set<string>();
+  if (move.type === 'log') {
+    const log = state.logs.find(l => l.id === move.id);
+    if (!log) return sweep;
+    if (log.orientation === 'horizontal') {
+      const minCol = Math.min(log.col, move.newCol);
+      const maxCol = Math.max(log.col, move.newCol) + log.length - 1;
+      for (let c = minCol; c <= maxCol; c++) sweep.add(`${log.row},${c}`);
+    } else {
+      const minRow = Math.min(log.row, move.newRow);
+      const maxRow = Math.max(log.row, move.newRow) + log.length - 1;
+      for (let r = minRow; r <= maxRow; r++) sweep.add(`${r},${log.col}`);
+    }
+  } else if (move.type === 'obstacle') {
+    const obs = state.hippoObstacles.find(h => h.id === move.id);
+    if (!obs) return sweep;
+    if (obs.orientation === 'horizontal') {
+      const minCol = Math.min(obs.col, move.newCol);
+      const maxCol = Math.max(obs.col, move.newCol) + 1; // length 2: +1 for tail
+      for (let c = minCol; c <= maxCol; c++) sweep.add(`${obs.row},${c}`);
+    } else {
+      const minRow = Math.min(obs.row, move.newRow);
+      const maxRow = Math.max(obs.row, move.newRow) + 1; // length 2: +1 for tail
+      for (let r = minRow; r <= maxRow; r++) sweep.add(`${r},${obs.col}`);
+    }
+  }
+  return sweep;
+}
+
+/**
  * After a piece move, find one representative cell per connected sub-region
- * that the hippo could occupy. A piece move can split the hippo's old region
- * into multiple disconnected parts; we return one cell per part so the BFS
- * explores all of them.
+ * that the hippo could validly occupy.
+ *
+ * The hippo must have been somewhere NOT in the piece's sweep path when the
+ * slide happened. We find connected components among old-region cells that
+ * are: (a) not in the sweep path, (b) not blocked by the piece's new position.
+ * Each component is a valid "where the hippo was during the slide" region,
+ * and we return one representative per component.
  */
 function findHippoStarts(
   oldRegion: Set<string>,
-  state: GameState,
+  state: GameState,    // state AFTER the piece move
+  sweep: Set<string>,  // all cells the piece swept through
 ): Array<{ row: number; col: number }> {
+  // Build blocked set from the new piece positions.
   const blocked = new Set<string>();
   const { mamaPos, mamaWidth = 1, mamaHeight = 1, boulders } = state.level;
   for (let ri = 0; ri < mamaHeight; ri++)
@@ -170,17 +210,19 @@ function findHippoStarts(
     for (let i = 0; i < 2; i++)
       blocked.add(obs.orientation === 'vertical' ? `${obs.row + i},${obs.col}` : `${obs.row},${obs.col + i}`);
 
-  // Collect free cells still in the old region.
-  const free = new Set<string>();
+  // Safe cells: in old region, not blocked by new piece position, not in sweep path.
+  const safe = new Set<string>();
   for (const key of oldRegion) {
-    if (!blocked.has(key)) free.add(key);
+    if (!blocked.has(key) && !sweep.has(key)) safe.add(key);
   }
 
-  // BFS within `free` to find connected components; return one rep per component.
+  if (safe.size === 0) return []; // hippo had nowhere to stand — move impossible
+
+  // BFS within `safe` to find connected components; return one rep per component.
   const visited = new Set<string>();
   const reps: Array<{ row: number; col: number }> = [];
 
-  for (const key of free) {
+  for (const key of safe) {
     if (visited.has(key)) continue;
     const comma = key.indexOf(',');
     reps.push({ row: Number(key.slice(0, comma)), col: Number(key.slice(comma + 1)) });
@@ -193,7 +235,7 @@ function findHippoStarts(
       const r = Number(cell.slice(0, ci)), c = Number(cell.slice(ci + 1));
       for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
         const nk = `${r + dr},${c + dc}`;
-        if (free.has(nk) && !visited.has(nk)) { visited.add(nk); bfsQ.push(nk); }
+        if (safe.has(nk) && !visited.has(nk)) { visited.add(nk); bfsQ.push(nk); }
       }
     }
   }
@@ -205,7 +247,8 @@ function findHippoStarts(
  *  so they never change the state key and are handled via anyWinCellInRegion.
  *
  *  The hippo is excluded from collision checks: in the actual game the player
- *  can always move the hippo out of a piece's path before sliding it. */
+ *  can always move the hippo out of a piece's path before sliding it (as long
+ *  as the hippo is not completely surrounded by the sweep path). */
 function getPieceMoves(state: GameState): SolverMove[] {
   // Shadow hippo position with an out-of-bounds cell so it doesn't limit slide ranges.
   const s: GameState = { ...state, hippoPos: { row: -999, col: -999 } };
@@ -241,8 +284,7 @@ function getPieceMoves(state: GameState): SolverMove[] {
 }
 
 function applyPieceMove(state: GameState, move: SolverMove): boolean {
-  // Exclude hippo from collision so pieces can slide past its current cell
-  // (the hippo steps aside first in actual play).
+  // Exclude hippo from collision so the piece's range isn't artificially limited.
   const savedHippo = state.hippoPos;
   state.hippoPos = { row: -999, col: -999 };
   let ok: boolean;
@@ -263,11 +305,11 @@ const DEFAULT_MAX_STATES = 500_000;
  * between piece slides.
  *
  * Win detection: checks whether any cell in the hippo's reachable region is
- * adjacent to mama, rather than checking only the hippo's anchor cell.
+ * adjacent to mama.
  *
- * Pieces may slide past the hippo's current cell (the hippo steps aside first).
- * If a piece move splits the hippo's region, one next-state is enqueued per
- * resulting sub-region so all reachable configurations are explored.
+ * Correctness: before a piece slides, the hippo must be at a cell that is not
+ * in the piece's sweep path. We compute the sweep and exclude those cells when
+ * re-anchoring the hippo after each piece move.
  *
  * @param options.maxStates  Stop after exploring this many states (default 500,000).
  */
@@ -297,12 +339,15 @@ export function solveLevel(level: Level, options?: { maxStates?: number }): Solv
     const { state, reachable: oldReachable } = queue[head];
 
     for (const move of getPieceMoves(state)) {
+      // Compute sweep BEFORE applying the move (uses old piece positions).
+      const sweep = computeSweep(state, move);
+
       const next = cloneState(state);
       if (!applyPieceMove(next, move)) continue;
 
-      // A piece move may split the hippo's old region into disconnected parts.
-      // Enumerate one representative per sub-region and enqueue each separately.
-      const starts = findHippoStarts(oldReachable, next);
+      // Find valid hippo positions: old-region cells not in the sweep path,
+      // grouped by connected component. Each component is a separate next-state.
+      const starts = findHippoStarts(oldReachable, next, sweep);
       if (starts.length === 0) continue;
 
       for (const start of starts) {
