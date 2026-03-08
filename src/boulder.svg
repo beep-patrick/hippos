@@ -6,9 +6,6 @@
   <!-- highlight/lighter face -->
   <path d="M 28,62 C 18,54 20,38 30,30 C 38,24 50,20 60,22 C 68,24 72,32 68,42 C 64,52 48,58 36,58 C 32,58 30,64 28,62 Z"
     fill="#9E9E9E" />
-  <!-- crack detail -->
-  <path d="M 48,28 L 44,44 L 50,50 L 46,62"
-    fill="none" stroke="#6E6E6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
   <!-- small chip detail -->
   <circle cx="68" cy="56" r="5" fill="#7A7A7A" />
 </svg>

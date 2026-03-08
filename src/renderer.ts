@@ -2,7 +2,13 @@ import type { GameState, Level } from './types';
 import HIPPO_SVG from './hippo.svg?raw';
 import ADULT_HIPPO_SVG from './adultHippo.svg?raw';
 import MAMA_HIPPO_SVG from './mamaHippo.svg?raw';
-import BOULDER_SVG from './boulder.svg?raw';
+import BOULDER1_SVG from './boulder.svg?raw';
+import BOULDER2_SVG from './boulder2.svg?raw';
+import BOULDER3_SVG from './boulder3.svg?raw';
+import BOULDER4_SVG from './boulder4.svg?raw';
+import BOULDER5_SVG from './boulder5.svg?raw';
+
+const BOULDER_SVGS = [BOULDER1_SVG, BOULDER2_SVG, BOULDER3_SVG, BOULDER4_SVG, BOULDER5_SVG];
 
 let CELL_PX = 56; // computed in buildGrid from viewport; fallback default
 
@@ -133,7 +139,10 @@ export function renderPieces(container: HTMLElement, state: GameState): void {
   for (const boulder of state.level.boulders ?? []) {
     const el = document.createElement('div');
     el.className = 'piece boulder';
-    el.innerHTML = BOULDER_SVG;
+    el.innerHTML = BOULDER_SVGS[Math.floor(Math.random() * BOULDER_SVGS.length)];
+    const rotation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
+    const flip = Math.random() < 0.5 ? ' scaleX(-1)' : '';
+    el.style.transform = `rotate(${rotation}deg)${flip}`;
     el.style.left = `${boulder.col * CELL_PX}px`;
     el.style.top = `${boulder.row * CELL_PX}px`;
     el.style.width = `${CELL_PX}px`;
