@@ -3,7 +3,7 @@
  */
 import { parseCsvLevel } from '../src/parseCsvLevel.js';
 import { initState, moveLog, moveHippo, moveHippoObstacle, checkWin } from '../src/gameState.js';
-import { solveLevel, type SolverMove } from '../src/solver2.js';
+import { solveLevel, type SolverMove } from '../src/solver.js';
 import levelsJson from '../src/levels/levels.generated.json' assert { type: 'json' };
 
 const levels = levelsJson as Array<{ name: string; csv: string }>;
