@@ -117,12 +117,14 @@ function testLevel(name: string, level: Level, maxStates: number) {
   console.log();
 
   console.log('Transcript:');
-  for (const move of result.path!) {
-    if (move.type === 'hippo') {
-      const dir = move.dr === -1 ? 'up' : move.dr === 1 ? 'down' : move.dc === -1 ? 'left' : 'right';
-      console.log(`  hippo ${dir}`);
-    } else {
-      console.log(`  slide ${move.id} -> (${move.newRow},${move.newCol})`);
+  if (result.transcript) {
+    for (const entry of result.transcript) {
+      if (entry.action === 'hippo') {
+        console.log(`  Move hippo to (${entry.target.row},${entry.target.col})`);
+      } else {
+        const name = entry.piece.replace('log-', '').replace('obstacle-', '');
+        console.log(`  Slide ${name} ${entry.direction} ${entry.distance}`);
+      }
     }
   }
 

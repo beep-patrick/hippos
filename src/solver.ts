@@ -5,12 +5,28 @@ export type SolverMove =
   | { type: 'log'; id: string; newRow: number; newCol: number }
   | { type: 'obstacle'; id: string; newRow: number; newCol: number };
 
+/** Human-readable transcript entry. */
+export interface TranscriptEntry {
+  /** 'slide' for piece moves, 'hippo' for hippo repositioning */
+  action: 'slide' | 'hippo';
+  /** Piece id (e.g. 'log-J', 'obstacle-a') or 'hippo' */
+  piece: string;
+  /** Direction: 'left'|'right'|'up'|'down' */
+  direction: string;
+  /** Number of cells moved */
+  distance: number;
+  /** Target cell (row, col) */
+  target: { row: number; col: number };
+}
+
 export interface SolveResult {
   solvable: boolean;
   /** Number of piece slides in the optimal solution (hippo steps not counted). */
   moves?: number;
   /** Full transcript: hippo steps interleaved with piece slides. */
   path?: SolverMove[];
+  /** Human-readable transcript with directions and distances. */
+  transcript?: TranscriptEntry[];
   statesExplored: number;
 }
 
@@ -373,8 +389,8 @@ export function solveLevel(level: Level, options?: { maxStates?: number }): Solv
             cur = queue[cur].parentIdx;
           }
           const startAnchor = queue[cur].anchor;
-          const path = buildTranscript(level, steps, startAnchor);
-          return { solvable: true, moves: steps.length, path, statesExplored: visited.size };
+          const { path, transcript } = buildTranscript(level, steps, startAnchor);
+          return { solvable: true, moves: steps.length, path, transcript, statesExplored: visited.size };
         }
 
         queue.push({
@@ -397,18 +413,29 @@ function buildTranscript(
   level: Level,
   steps: { move: PieceMove; anchor: [number, number] }[],
   startAnchor: [number, number],
-): SolverMove[] {
+): { path: SolverMove[]; transcript: TranscriptEntry[] } {
   const out: SolverMove[] = [];
+  const transcript: TranscriptEntry[] = [];
   let logs = level.logs.map(l => ({ ...l }));
   let obs = level.hippoObstacles.map(o => ({ ...o }));
   let hr = startAnchor[0], hc = startAnchor[1];
+
+  function addHippoMove(toR: number, toC: number) {
+    if (hr === toR && hc === toC) return;
+    const dr = toR - hr, dc = toC - hc;
+    // Pick primary direction for the transcript
+    let direction: string;
+    if (Math.abs(dr) >= Math.abs(dc)) direction = dr > 0 ? 'down' : 'up';
+    else direction = dc > 0 ? 'right' : 'left';
+    const distance = Math.abs(dr) + Math.abs(dc);
+    transcript.push({ action: 'hippo', piece: 'hippo', direction, distance, target: { row: toR, col: toC } });
+  }
 
   for (const { move: m, anchor } of steps) {
     const blk = blocked(level, logs, obs);
     const region = flood(level, hr, hc, blk);
 
-    // The anchor is where the hippo needs to be (safe cell, correct component).
-    // Walk hippo to the anchor first (anchor is in the current region).
+    // Walk hippo to anchor
     const [ar, ac] = anchor;
     if (hr !== ar || hc !== ac) {
       const target = new Set<string>([ck(ar, ac)]);
@@ -417,11 +444,10 @@ function buildTranscript(
         out.push(s);
         if (s.type === 'hippo') { hr += s.dr; hc += s.dc; }
       }
+      addHippoMove(ar, ac);
     }
 
-    // If hippo is still in sweep (anchor could be in sweep if it's safe but
-    // not in the sweep — actually anchor IS safe = not in sweep by construction).
-    // Just verify and move out if somehow needed.
+    // Sweep fallback
     let orient: string, pRow: number, pCol: number, len: number;
     if (m.type === 'log') {
       const l = logs.find(x => x.id === m.id)!;
@@ -432,15 +458,31 @@ function buildTranscript(
     }
     const sw = sweep(orient, pRow, pCol, len, m.newRow, m.newCol);
     if (sw.has(ck(hr, hc))) {
-      // Fallback: move to any safe cell in region
       const safeTgts = new Set<string>();
       for (const k of region) if (!sw.has(k)) safeTgts.add(k);
       const hippoSteps = bfsPathInRegion(hr, hc, safeTgts, region);
+      const prevR = hr, prevC = hc;
       for (const s of hippoSteps) {
         out.push(s);
         if (s.type === 'hippo') { hr += s.dr; hc += s.dc; }
       }
+      if (hr !== prevR || hc !== prevC) addHippoMove(hr, hc);
     }
+
+    // Piece slide: compute direction and distance
+    let slideDir: string, slideDist: number;
+    if (orient === 'horizontal') {
+      slideDist = Math.abs(m.newCol - pCol);
+      slideDir = m.newCol > pCol ? 'right' : 'left';
+    } else {
+      slideDist = Math.abs(m.newRow - pRow);
+      slideDir = m.newRow > pRow ? 'down' : 'up';
+    }
+    transcript.push({
+      action: 'slide', piece: m.id,
+      direction: slideDir, distance: slideDist,
+      target: { row: m.newRow, col: m.newCol },
+    });
 
     out.push(m);
     const res = apply(logs, obs, m);
@@ -452,7 +494,12 @@ function buildTranscript(
   const region = flood(level, hr, hc, blk);
   const wc = winCells(level, region);
   const hippoSteps = bfsPathInRegion(hr, hc, wc, region);
-  for (const s of hippoSteps) out.push(s);
+  const prevR = hr, prevC = hc;
+  for (const s of hippoSteps) {
+    out.push(s);
+    if (s.type === 'hippo') { hr += s.dr; hc += s.dc; }
+  }
+  if (hr !== prevR || hc !== prevC) addHippoMove(hr, hc);
 
-  return out;
+  return { path: out, transcript };
 }
