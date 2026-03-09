@@ -73,16 +73,17 @@ function startGame(index: number): void {
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 function getLevelFromUrl(): number {
-  const match = window.location.pathname.match(/\/(\d+)$/);
+  const match = window.location.pathname.match(/\/([^/]+)$/);
   if (match) {
-    const num = parseInt(match[1], 10);
-    if (num >= 1 && num <= levels.length) return num - 1;
+    const name = match[1];
+    const index = levelEntries.findIndex(e => e.name === name);
+    if (index !== -1) return index;
   }
   return 0;
 }
 
 function navigateTo(index: number): void {
-  history.pushState({ levelIndex: index }, '', `${basePath}/${index + 1}`);
+  history.pushState({ levelIndex: index }, '', `${basePath}/${levelEntries[index].name}`);
   startGame(index);
 }
 
@@ -96,5 +97,5 @@ restartBtn.addEventListener('click', () => {
 });
 
 const initialIndex = getLevelFromUrl();
-history.replaceState({ levelIndex: initialIndex }, '', `${basePath}/${initialIndex + 1}`);
+history.replaceState({ levelIndex: initialIndex }, '', `${basePath}/${levelEntries[initialIndex].name}`);
 startGame(initialIndex);
