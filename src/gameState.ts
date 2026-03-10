@@ -171,7 +171,8 @@ export function checkWin(state: GameState): boolean {
   const { row: mr, col: mc } = state.level.mamaPos;
   const mw = state.level.mamaWidth ?? 1;
   const mh = state.level.mamaHeight ?? 1;
-  return row >= mr - 1 && row <= mr + mh && col >= mc - 1 && col <= mc + mw;
+  state.won = row >= mr - 1 && row <= mr + mh && col >= mc - 1 && col <= mc + mw;
+  return state.won;
 }
 
 // Compute how far up/down the hippo can move from a given cell.

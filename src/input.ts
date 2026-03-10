@@ -76,10 +76,11 @@ export function attachInputHandlers(
 
   // ── pointer down ──
   grid.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (state.won) return;
     const target = (e.target as HTMLElement).closest<HTMLElement>('.piece');
     if (!target) return;
     const id = target.dataset.id ?? '';
-    e.preventDefault();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
     if (id === 'hippo') {
@@ -233,7 +234,6 @@ export function attachInputHandlers(
 
       while (state.hippoPos.row !== targetRow || state.hippoPos.col !== targetCol) {
         if (!stepHippoToward(state, targetRow, targetCol)) break;
-        if (state.won) break;
       }
 
       const hippoEl = container.querySelector<HTMLElement>('[data-id="hippo"]');
