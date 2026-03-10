@@ -77,6 +77,7 @@ export function attachInputHandlers(
   // ── pointer down ──
   grid.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    console.log('pointerdown', { won: state.won, stateRef: state });
     if (state.won) return;
     const target = (e.target as HTMLElement).closest<HTMLElement>('.piece');
     if (!target) return;

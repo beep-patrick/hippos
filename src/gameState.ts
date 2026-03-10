@@ -146,6 +146,7 @@ export function moveHippoObstacle(state: GameState, obstacleId: string, newRow: 
 // Try to move the hippo by (dr, dc).
 // Returns true and mutates if valid.
 export function moveHippo(state: GameState, dr: number, dc: number): boolean {
+  if (state.won) return false;
   const { row, col } = state.hippoPos;
   const newRow = row + dr;
   const newCol = col + dc;
@@ -171,7 +172,9 @@ export function checkWin(state: GameState): boolean {
   const { row: mr, col: mc } = state.level.mamaPos;
   const mw = state.level.mamaWidth ?? 1;
   const mh = state.level.mamaHeight ?? 1;
-  state.won = row >= mr - 1 && row <= mr + mh && col >= mc - 1 && col <= mc + mw;
+  if (row >= mr - 1 && row <= mr + mh && col >= mc - 1 && col <= mc + mw) {
+    state.won = true;
+  }
   return state.won;
 }
 
