@@ -4,6 +4,12 @@ import { buildGrid, renderPieces, updateMoveCount, showWin, hideWin, startHeartA
 import { attachInputHandlers } from './input';
 import hippoSoundUrl from './sounds/hippo.mp3?url';
 
+// Pre-create audio element and unlock it on first user gesture (required for mobile).
+const hippoAudio = new Audio(hippoSoundUrl);
+document.addEventListener('pointerdown', () => {
+  hippoAudio.load();
+}, { once: true });
+
 // Load all CSV level files from src/levels/. Vite resolves these at build time.
 const csvModules = import.meta.glob('./levels/*.csv', { eager: true, query: '?raw', import: 'default' });
 
@@ -68,10 +74,11 @@ function startGame(index: number): void {
   updateMoveCount(0);
 
   cleanupInput = attachInputHandlers(container, state, () => {
-    const audio = new Audio(hippoSoundUrl);
     startHeartAnimation(container);
-    audio.play();
-    audio.addEventListener('ended', () => {
+    hippoAudio.currentTime = 0;
+    hippoAudio.play();
+
+    setTimeout(() => {
       stopHeartAnimation(container);
       const hasNext = currentLevelIndex + 1 < levels.length;
       const justFinishedMain = currentLevelIndex + 1 === mainLevelCount;
@@ -82,7 +89,7 @@ function startGame(index: number): void {
       } else {
         showWin(container, 'You finished all the bonus levels too!');
       }
-    });
+    }, 2000);
   });
 }
 
