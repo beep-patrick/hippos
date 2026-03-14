@@ -77,7 +77,7 @@ export function attachInputHandlers(
   // ── pointer down ──
   grid.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    console.log('pointerdown', { won: state.won, stateRef: state });
+    if (active) return;
     if (state.won) return;
     const target = (e.target as HTMLElement).closest<HTMLElement>('.piece');
     if (!target) return;
@@ -248,6 +248,8 @@ export function attachInputHandlers(
 
     active = null;
   }, opts);
+
+  window.addEventListener('pointercancel', () => { active = null; }, opts);
 
   return () => abort.abort();
 }
